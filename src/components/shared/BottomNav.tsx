@@ -13,7 +13,7 @@ const navItems = [
 export default function BottomNav() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
       aria-label="하단 탭"
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around">
@@ -49,7 +49,7 @@ export function DesktopNav() {
               'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all',
               isActive
                 ? 'border-primary bg-primary text-primary-foreground shadow-[0_12px_28px_-18px_rgba(20,184,166,0.9)]'
-                : 'border-border bg-card text-card-foreground hover:border-primary/50',
+                : 'border-border bg-white text-foreground shadow-sm hover:border-primary/40 hover:bg-primary/5',
             )
           }
         >

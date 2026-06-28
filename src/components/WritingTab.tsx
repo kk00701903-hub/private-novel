@@ -100,7 +100,7 @@ export default function WritingTab() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-4">
           <WorkSelector
             screen="writing"
@@ -123,7 +123,7 @@ export default function WritingTab() {
         <p className="text-muted-foreground">작품을 선택하세요.</p>
       ) : (
         <>
-          <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold">회차 목록</h2>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {work.episodes.map((ep) => {
@@ -135,7 +135,7 @@ export default function WritingTab() {
                     key={ep.number}
                     className={cn(
                       'flex flex-col gap-2 rounded-xl border p-3 transition-colors',
-                      isSelected ? 'border-primary bg-primary/5' : 'border-border bg-background',
+                      isSelected ? 'border-primary bg-primary/5' : 'border-border bg-white shadow-sm',
                     )}
                   >
                     <button
@@ -145,10 +145,10 @@ export default function WritingTab() {
                     >
                       {ep.number}회차
                       {status === 'saved' && (
-                        <span className="ml-1 text-[10px] font-normal text-emerald-400">저장됨</span>
+                        <span className="ml-1 text-[10px] font-normal text-emerald-600">저장됨</span>
                       )}
                       {status === 'draft' && (
-                        <span className="ml-1 text-[10px] font-normal text-amber-400">집필됨</span>
+                        <span className="ml-1 text-[10px] font-normal text-amber-600">집필됨</span>
                       )}
                     </button>
                     <Button
@@ -174,7 +174,7 @@ export default function WritingTab() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <Label>{selectedEpisode}회차 · 집필 내용 편집</Label>
               <span className="text-xs text-muted-foreground">{editText.length}자</span>
@@ -196,7 +196,7 @@ export default function WritingTab() {
                 저장 (저장 탭 + MD 파일)
               </Button>
               {episode?.finalText && editText === episode.finalText && (
-                <span className="flex items-center gap-1 text-xs text-emerald-400">
+                <span className="flex items-center gap-1 text-xs text-emerald-600">
                   <Check size={14} />
                   저장 탭에 반영됨
                 </span>

@@ -9,7 +9,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="dark flex min-h-screen items-center justify-center bg-slate-900 px-5 text-slate-100">
+    <div className="flex min-h-screen items-center justify-center bg-background px-5">
       {/* @section: not-found */}
       <div className="max-w-md rounded-3xl border border-border bg-card p-8 text-center shadow-[0_20px_60px_-35px_rgba(20,184,166,0.8)]">
         <p className="text-sm font-semibold text-primary">404</p>

@@ -40,7 +40,7 @@ export default function ArchiveTab() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
-      <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
         <h2 className="flex items-center gap-2 text-base font-semibold">
           <Archive size={18} className="text-primary" />
           저장된 회차
@@ -63,7 +63,7 @@ export default function ArchiveTab() {
       </div>
 
       {work && (
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <p className="mb-2 text-xs font-medium text-muted-foreground">
             저장된 회차 ({savedEpisodes.length}/{work.totalEpisodes})
           </p>
@@ -77,8 +77,8 @@ export default function ArchiveTab() {
                   'rounded-lg border px-3 py-1.5 text-xs transition-colors',
                   ep.finalText.trim()
                     ? episodeNumber === ep.number
-                      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
-                      : 'border-emerald-500/40 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                      : 'border-emerald-300 bg-emerald-50/80 text-emerald-700 hover:bg-emerald-100'
                     : episodeNumber === ep.number
                       ? 'border-border bg-secondary text-muted-foreground'
                       : 'border-border/50 text-muted-foreground/50',
@@ -92,7 +92,7 @@ export default function ArchiveTab() {
       )}
 
       {episode?.finalText ? (
-        <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <Label>{episodeNumber}회차 최종본</Label>
             <Button type="button" variant="outline" size="sm" onClick={handleExportMd}>
@@ -100,7 +100,7 @@ export default function ArchiveTab() {
               MD 다운로드
             </Button>
           </div>
-          <pre className="max-h-[480px] overflow-auto whitespace-pre-wrap rounded-lg bg-background p-4 font-mono text-sm">
+          <pre className="max-h-[480px] overflow-auto whitespace-pre-wrap rounded-lg bg-slate-50 p-4 font-mono text-sm text-foreground">
             {episode.finalText}
           </pre>
           <p className="mt-2 text-xs text-muted-foreground">{episode.finalText.length}자</p>

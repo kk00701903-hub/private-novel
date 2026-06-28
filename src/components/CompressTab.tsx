@@ -87,7 +87,7 @@ export default function CompressTab() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
       {/* @section: compression-intro */}
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_18px_45px_-30px_rgba(20,184,166,0.42)]">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h2 className="text-base font-semibold text-card-foreground">🖼️ 표지/삽화 압축</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           웹소설 플랫폼 업로드용 이미지를 1MB 이하로 자동 압축합니다. 모든 처리는 브라우저 안에서 수행됩니다.
@@ -105,8 +105,8 @@ export default function CompressTab() {
         onClick={() => fileInputRef.current?.click()}
         className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed p-10 text-center transition-all duration-200 ${
           isDragOver
-            ? 'border-primary bg-primary/10 shadow-[0_20px_60px_-35px_rgba(20,184,166,0.9)]'
-            : 'border-border bg-card hover:border-primary/60 hover:bg-secondary/50'
+            ? 'border-primary bg-teal-50 shadow-md'
+            : 'border-border bg-white hover:border-primary/40 hover:bg-slate-50'
         }`}
       >
         <div className="rounded-2xl bg-secondary p-4">
@@ -135,11 +135,11 @@ export default function CompressTab() {
       {/* @section: compression-comparison */}
       {original && compressed && !isCompressing && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_45px_-34px_rgba(20,184,166,0.34)]">
+          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-border px-4 py-3">
               <ImageIcon size={15} className="text-muted-foreground" />
               <span className="text-sm font-semibold text-card-foreground">원본 이미지</span>
-              <span className="ml-auto rounded-full bg-amber-500/10 px-2.5 py-1 font-mono text-xs text-amber-300">
+              <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-1 font-mono text-xs text-amber-800">
                 {formatSize(original.size)}
               </span>
             </div>
@@ -149,14 +149,14 @@ export default function CompressTab() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_45px_-34px_rgba(20,184,166,0.34)]">
+          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
             <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-              <ImageDown size={15} className="text-emerald-400" />
+              <ImageDown size={15} className="text-emerald-600" />
               <span className="text-sm font-semibold text-card-foreground">압축 결과</span>
-              <span className="ml-auto rounded-full bg-emerald-500/10 px-2.5 py-1 font-mono text-xs text-emerald-300">
+              <span className="ml-auto rounded-full bg-emerald-100 px-2.5 py-1 font-mono text-xs text-emerald-800">
                 {formatSize(compressed.size)}
               </span>
-              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
                 {reductionRate}% 감소
               </span>
             </div>

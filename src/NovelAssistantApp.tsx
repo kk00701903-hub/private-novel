@@ -1,32 +1,36 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { WandSparkles } from 'lucide-react';
-import { useNovelStore } from '@/stores/novelStore';
+import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
 import BottomNav, { DesktopNav } from '@/components/shared/BottomNav';
 
 export default function NovelAssistantApp() {
   const works = useNovelStore((s) => s.works);
+  const settings = useNovelStore((s) => s.settings);
   const location = useLocation();
 
-  const activeWork = works.find(
-    (w) =>
-      w.id ===
-      (location.pathname.includes('/works')
-        ? works[0]?.id
-        : works[0]?.id),
+  const screen = location.pathname.split('/').pop() ?? 'writing';
+  const activeWorkId = resolveWorkId(
+    (['writing', 'works', 'archive', 'drafts', 'settings'].includes(screen)
+      ? screen
+      : 'writing') as 'writing' | 'works' | 'archive' | 'drafts' | 'settings',
+    works,
+    settings,
   );
+  const activeWork = works.find((w) => w.id === activeWorkId);
 
   return (
-    <div className="dark min-h-screen bg-slate-900 text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-[-12%] top-[-20%] h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute bottom-[-18%] right-[-10%] h-[30rem] w-[30rem] rounded-full bg-accent/20 blur-3xl" />
+        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-teal-200/40 blur-3xl" />
+        <div className="absolute -right-16 top-1/4 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-96 rounded-full bg-emerald-100/50 blur-3xl" />
       </div>
 
       <div className="relative flex min-h-screen flex-col pb-20 md:pb-0">
-        <header className="shrink-0 border-b border-border bg-background/80 px-4 py-4 md:px-8">
+        <header className="shrink-0 border-b border-border/80 bg-white/85 px-4 py-4 shadow-sm backdrop-blur-md md:px-8">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                 <WandSparkles size={13} />
                 Claude · Zustand · localStorage
               </div>
@@ -38,9 +42,9 @@ export default function NovelAssistantApp() {
               </p>
             </div>
             {activeWork && (
-              <div className="rounded-xl border border-border bg-card px-3 py-2 text-xs">
+              <div className="rounded-xl border border-border bg-white px-3 py-2 text-xs shadow-sm">
                 <span className="text-muted-foreground">작품 </span>
-                <span className="font-semibold text-card-foreground">{activeWork.title}</span>
+                <span className="font-semibold text-foreground">{activeWork.title}</span>
               </div>
             )}
           </div>
