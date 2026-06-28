@@ -1,0 +1,210 @@
+@import url("https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+==========================================================================
+【AI HANDOVER NOTE】
+1. DESIGN PHILOSOPHY:
+   - Core design philosophy: **Atmosphere-First Neo-minimalism** with a focus on creative workflow clarity. This is a professional writing tool for Korean web novel authors, requiring a calm, distraction-free environment that supports long editing sessions while maintaining visual sophistication.
+   - Visual style: **Physicality with subtle rim-light** combined with **Bento modular surfaces**. Each functional area (AI editing panel, image compression workspace, settings) is treated as a distinct card with gentle depth cues. The design avoids aggressive glassmorphism to maintain text readability during extended writing sessions.
+   - Rationale: Web novel editing demands high text legibility and minimal cognitive load. The atmosphere-first approach creates a "digital studio" feel—professional yet approachable, technical yet creative. The modular Bento layout allows clear separation between AI text processing and image management workflows.
+
+2. TYPOGRAPHY:
+   - **Sans font (Pretendard + Noto Sans KR)**: Pretendard is chosen as the primary typeface for its exceptional Korean character rendering and modern geometric proportions. It provides superior readability for long-form Korean text compared to system fonts, with carefully balanced letter spacing that reduces eye strain. The Noto Sans KR fallback ensures consistency across all Korean glyphs. This pairing creates a professional, editorial feel appropriate for a literary tool.
+   - **Mono font (JetBrains Mono)**: Selected for displaying API keys, JSON responses, and technical metadata. Its ligature support and clear distinction between similar characters (0/O, 1/l/I) make it ideal for code-like content. The D2Coding fallback provides excellent Korean monospace rendering for technical logs.
+
+3. COLOR SYSTEM:
+   - **Brand primary (Teal-Cyan, Hue 190)**: A sophisticated teal-cyan hue evokes creativity, clarity, and digital intelligence—perfectly aligned with an AI writing assistant. This hue avoids the overused violet/indigo AI cliché while maintaining a tech-forward feel. The cooler temperature suggests precision and analytical capability, balanced with the warmth needed for creative work.
+   - **Color mapping**: --primary uses the teal at medium chroma for primary actions (AI generation, image compression triggers). --accent shifts 25 degrees toward blue (Hue 215) for secondary interactive elements, creating an analogous harmony. --ring uses the same teal with higher chroma for focus states, ensuring accessibility.
+   - **Semantic colors**: --destructive uses a muted terracotta (Hue 15) rather than pure red, maintaining visual calm while clearly signaling deletion/reset actions. --success employs a forest green (Hue 150) for completion states. --warning uses amber (Hue 50) for API quota alerts. All semantic colors are intentionally desaturated to avoid visual fatigue during long sessions.
+   - **Neutral strategy**: Background and card colors carry a subtle teal tint (C≈0.012 in light, 0.008 in dark) to create brand-tinted neutrals. This prevents the sterile "pure gray" look while maintaining professional restraint. Dark mode uses deeper backgrounds (L=0.14) with slightly elevated chroma on interactive surfaces to maintain hierarchy without glare.
+
+4. USAGE GUIDE:
+   - **Layout type**: Dashboard full-width with sidebar navigation. The main canvas should accommodate side-by-side comparison views (original/edited text, original/compressed images). Use a persistent left sidebar for project navigation and settings.
+   - **Recommended effects**: Apply subtle backdrop-blur (blur-sm) to modal overlays and popovers. Use rim-light technique (1px top border with slightly lighter shade) on cards to create gentle depth. Avoid heavy shadows—prefer border-based separation with the brand-tinted border color.
+   - **Project-specific rules**: 
+     - Text editing areas must use --background with maximum contrast to --foreground (WCAG AAA for body text)
+     - Image comparison zones should use --card with clear borders to frame visual content
+     - API key inputs must use --input with --ring focus states for security visibility
+     - Tab navigation should use --muted for inactive states, --primary for active
+     - Maintain generous padding (p-6 to p-8) in content areas to reduce visual density
+   - **Variance level: MEDIUM** — Professional restraint with intentional accent moments. The color palette leans refined rather than bold, but the teal primary provides enough character to avoid generic SaaS blandness. Typography is clean and editorial. Motion should be purposeful (200-300ms transitions) rather than playful.
+==========================================================================
+*/
+
+:root {
+  /* Typography */
+  --font-sans: Pretendard, "Noto Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "JetBrains Mono", "D2Coding", ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Core UI Tokens */
+  --background: oklch(0.985 0.012 190);
+  --foreground: oklch(0.15 0.018 190);
+  --card: oklch(0.98 0.010 190);
+  --card-foreground: oklch(0.18 0.016 190);
+  --popover: oklch(0.99 0.008 190);
+  --popover-foreground: oklch(0.15 0.018 190);
+  --primary: oklch(0.55 0.14 190);
+  --primary-foreground: oklch(0.98 0.008 190);
+  --secondary: oklch(0.92 0.020 190);
+  --secondary-foreground: oklch(0.22 0.015 190);
+  --muted: oklch(0.94 0.015 190);
+  --muted-foreground: oklch(0.48 0.012 190);
+  --accent: oklch(0.90 0.028 215);
+  --accent-foreground: oklch(0.20 0.020 215);
+  --destructive: oklch(0.58 0.18 15);
+  --destructive-foreground: oklch(0.98 0.006 15);
+  --border: oklch(0.88 0.018 190);
+  --input: oklch(0.90 0.020 190);
+  --ring: oklch(0.55 0.16 190);
+  
+  /* Chart Tokens */
+  --chart-1: oklch(0.60 0.15 190);
+  --chart-2: oklch(0.62 0.14 215);
+  --chart-3: oklch(0.58 0.13 150);
+  --chart-4: oklch(0.64 0.12 50);
+  --chart-5: oklch(0.56 0.11 280);
+  
+  /* Sidebar Tokens */
+  --sidebar: oklch(0.97 0.012 190);
+  --sidebar-foreground: oklch(0.25 0.015 190);
+  --sidebar-primary: oklch(0.55 0.14 190);
+  --sidebar-primary-foreground: oklch(0.98 0.008 190);
+  --sidebar-accent: oklch(0.90 0.028 215);
+  --sidebar-accent-foreground: oklch(0.20 0.020 215);
+  --sidebar-border: oklch(0.90 0.016 190);
+  --sidebar-ring: oklch(0.55 0.16 190);
+}
+
+.dark {
+  --background: oklch(0.14 0.008 190);
+  --foreground: oklch(0.92 0.010 190);
+  --card: oklch(0.17 0.012 190);
+  --card-foreground: oklch(0.90 0.012 190);
+  --popover: oklch(0.16 0.010 190);
+  --popover-foreground: oklch(0.92 0.010 190);
+  --primary: oklch(0.65 0.16 190);
+  --primary-foreground: oklch(0.12 0.008 190);
+  --secondary: oklch(0.22 0.025 190);
+  --secondary-foreground: oklch(0.88 0.012 190);
+  --muted: oklch(0.24 0.020 190);
+  --muted-foreground: oklch(0.62 0.015 190);
+  --accent: oklch(0.35 0.08 215);
+  --accent-foreground: oklch(0.92 0.012 215);
+  --destructive: oklch(0.55 0.20 15);
+  --destructive-foreground: oklch(0.95 0.008 15);
+  --border: oklch(0.28 0.022 190);
+  --input: oklch(0.26 0.024 190);
+  --ring: oklch(0.65 0.18 190);
+  
+  /* Chart Tokens */
+  --chart-1: oklch(0.68 0.17 190);
+  --chart-2: oklch(0.66 0.16 215);
+  --chart-3: oklch(0.64 0.15 150);
+  --chart-4: oklch(0.70 0.14 50);
+  --chart-5: oklch(0.62 0.13 280);
+  
+  /* Sidebar Tokens */
+  --sidebar: oklch(0.12 0.010 190);
+  --sidebar-foreground: oklch(0.85 0.012 190);
+  --sidebar-primary: oklch(0.65 0.16 190);
+  --sidebar-primary-foreground: oklch(0.12 0.008 190);
+  --sidebar-accent: oklch(0.35 0.08 215);
+  --sidebar-accent-foreground: oklch(0.92 0.012 215);
+  --sidebar-border: oklch(0.25 0.020 190);
+  --sidebar-ring: oklch(0.65 0.18 190);
+}
+
+@theme inline {
+  /* Shadcn Core Mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Charts Mapping */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar Mapping */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Typography */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* Radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans min-h-screen;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  code, pre {
+    @apply font-mono;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-primary;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
+  }
+}
