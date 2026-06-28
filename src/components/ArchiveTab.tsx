@@ -31,13 +31,13 @@ export default function ArchiveTab() {
     }
   }, [workId, works, settings]);
 
-  const handleExportMd = () => {
+  const handleExportMd = async () => {
     if (!work || !episode?.finalText.trim()) {
       toast.error('저장된 최종본이 없습니다. AI 집필 탭에서 먼저 저장하세요.');
       return;
     }
-    const filename = saveFinalMdLocally(work.title, episodeNumber, episode.finalText);
-    toast.success(`${filename} 다운로드`);
+    const filename = await saveFinalMdLocally(work.title, episodeNumber, episode.finalText);
+    toast.success(`${filename} 저장`);
   };
 
   return (

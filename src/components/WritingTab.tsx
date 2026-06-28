@@ -6,7 +6,6 @@ import WorkSelector from '@/components/shared/WorkSelector';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { rewriteEpisode } from '@/services/claudeService';
-import { saveFinalMdLocally } from '@/lib/draftMd';
 import { getEpisodeDisplayTitle } from '@/lib/episodeUtils';
 import SectionCard from '@/components/layout/SectionCard';
 import PageToolbar from '@/components/layout/PageToolbar';
@@ -87,8 +86,7 @@ export default function WritingTab() {
     setSaving(true);
     try {
       archiveEpisode(workId, selectedEpisode, editText);
-      const filename = saveFinalMdLocally(work.title, selectedEpisode, editText);
-      toast.success(`${selectedEpisode}회차 저장 완료 · 저장 탭 및 ${filename}`);
+      toast.success(`${selectedEpisode}회차 저장 완료 · 저장 탭 및 MD 파일`);
     } finally {
       setSaving(false);
     }

@@ -1,11 +1,17 @@
+import { useEffect, useState } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
 import BottomNav, { DesktopNav } from '@/components/shared/BottomNav';
+import { initMdStorage } from '@/lib/localMdStorage';
 
 export default function NovelAssistantApp() {
   const works = useNovelStore((s) => s.works);
   const settings = useNovelStore((s) => s.settings);
   const location = useLocation();
+
+  useEffect(() => {
+    void initMdStorage();
+  }, []);
 
   const screen = location.pathname.split('/').pop() ?? 'writing';
   const activeWorkId = resolveWorkId(
@@ -25,7 +31,7 @@ export default function NovelAssistantApp() {
             <div>
               <h1 className="text-display font-bold tracking-tight">웹소설 AI 편집 어시스턴트</h1>
               <p className="mt-1 text-caption text-muted-foreground">
-                {works.length > 0 ? `${works.length}개 작품 · 자동 저장` : '작품을 추가해 시작하세요'}
+                {works.length > 0 ? `${works.length}개 작품 · 자동 저장 · MD 백업` : '작품을 추가해 시작하세요'}
               </p>
             </div>
             {activeWork && (

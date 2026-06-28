@@ -7,10 +7,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import SectionCard from '@/components/layout/SectionCard';
-import { Search } from 'lucide-react';
+import { Search, FolderOpen, Download, FolderX } from 'lucide-react';
 import { checkConsistency } from '@/services/claudeService';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  clearMdSaveFolder,
+  getMdSaveFolderName,
+  initMdStorage,
+  pickMdSaveFolder,
+  supportsMdFolderPicker,
+} from '@/lib/localMdStorage';
+import { exportAllWorksMd } from '@/lib/mdSync';
 
 const SCREEN_LABELS: Record<ScreenId, string> = {
   writing: 'AI 집필',
@@ -33,8 +41,42 @@ export default function SettingsTab() {
   );
   const [consistencyResult, setConsistencyResult] = useState('');
   const [isChecking, setIsChecking] = useState(false);
+  const [mdFolder, setMdFolder] = useState<string | null>(null);
+  const [isExportingMd, setIsExportingMd] = useState(false);
 
   const styleWork = works.find((w) => w.id === styleWorkId);
+
+  useEffect(() => {
+    void initMdStorage().then(() => setMdFolder(getMdSaveFolderName()));
+  }, []);
+
+  const handlePickMdFolder = async () => {
+    const name = await pickMdSaveFolder();
+    if (name) {
+      setMdFolder(name);
+      toast.success(`MD 저장 폴더: ${name}`);
+    }
+  };
+
+  const handleClearMdFolder = async () => {
+    await clearMdSaveFolder();
+    setMdFolder(null);
+    toast.success('MD 저장 폴더 연결을 해제했습니다. 이후에는 다운로드로 저장됩니다.');
+  };
+
+  const handleExportAllMd = async () => {
+    if (works.length === 0) {
+      toast.error('내보낼 작품이 없습니다.');
+      return;
+    }
+    setIsExportingMd(true);
+    try {
+      const count = await exportAllWorksMd(works);
+      toast.success(`${count}개 MD 파일로 저장했습니다.`);
+    } finally {
+      setIsExportingMd(false);
+    }
+  };
 
   const handleConsistencyAll = async () => {
     if (works.length === 0) return;
@@ -55,6 +97,37 @@ export default function SettingsTab() {
 
   return (
     <div className="page-stack mx-auto max-w-3xl">
+      <SectionCard
+        title="MD 로컬 저장"
+        description="세계관·인물·플롯·초안·각색방향·AI집필·최종본·문체 설정을 입력하면 자동으로 MD 파일로 저장됩니다."
+      >
+        <div className="flex flex-wrap gap-2">
+          {supportsMdFolderPicker() && (
+            <Button type="button" variant="outline" size="sm" onClick={() => void handlePickMdFolder()}>
+              <FolderOpen size={14} className="mr-1.5" />
+              저장 폴더 선택
+            </Button>
+          )}
+          <Button type="button" variant="secondary" size="sm" onClick={() => void handleExportAllMd()} disabled={isExportingMd || works.length === 0}>
+            <Download size={14} className="mr-1.5" />
+            {isExportingMd ? '내보내는 중…' : '전체 MD 내보내기'}
+          </Button>
+          {mdFolder && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => void handleClearMdFolder()}>
+              <FolderX size={14} className="mr-1.5" />
+              폴더 연결 해제
+            </Button>
+          )}
+        </div>
+        <p className="mt-2 text-caption text-muted-foreground">
+          {mdFolder
+            ? `연결된 폴더: ${mdFolder} — 같은 파일명으로 덮어씁니다.`
+            : supportsMdFolderPicker()
+              ? '폴더를 선택하면 다운로드 없이 바로 저장됩니다. 미선택 시 브라우저 다운로드로 저장됩니다.'
+              : '이 브라우저는 폴더 선택을 지원하지 않습니다. MD 파일이 다운로드 폴더에 저장됩니다.'}
+        </p>
+      </SectionCard>
+
       <SectionCard title="Claude API" description="Anthropic API Key (브라우저에서 직접 호출)">
         <div className="space-y-3">
           <div>

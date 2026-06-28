@@ -10,12 +10,12 @@ import SectionCard from '@/components/layout/SectionCard';
 import PageToolbar from '@/components/layout/PageToolbar';
 import EditorTextarea from '@/components/layout/EditorTextarea';
 import {
-  downloadTextFile,
   parseDraftMd,
   readTextFile,
   sanitizeFilename,
   serializeDraftMd,
 } from '@/lib/draftMd';
+import { saveMdLocally } from '@/lib/localMdStorage';
 
 function useDebouncedSave(
   workId: string | null,
@@ -81,7 +81,7 @@ export default function DraftsTab() {
     toast.success(`${episodeNumber}회차 초안이 저장되었습니다.`);
   }, [workId, episodeNumber, draft, direction, setEpisodeField]);
 
-  const exportMd = useCallback(() => {
+  const exportMd = useCallback(async () => {
     if (!work) return;
     const md = serializeDraftMd({
       workTitle: work.title,
@@ -90,7 +90,7 @@ export default function DraftsTab() {
       rewriteDirection: direction,
     });
     const filename = `${sanitizeFilename(work.title)}_${episodeNumber}회차_초안.md`;
-    downloadTextFile(filename, md);
+    await saveMdLocally(filename, md);
     saveNow();
     toast.success(`${filename} 파일로 저장했습니다.`);
   }, [work, episodeNumber, draft, direction, saveNow]);
@@ -147,7 +147,7 @@ export default function DraftsTab() {
             <Save size={14} className="mr-1.5" />
             지금 저장
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={exportMd} disabled={!work}>
+          <Button type="button" variant="outline" size="sm" onClick={() => void exportMd()} disabled={!work}>
             <Download size={14} className="mr-1.5" />
             MD 파일로 저장
           </Button>
@@ -180,7 +180,7 @@ export default function DraftsTab() {
           placeholder="회차 초안을 입력하세요. 자동 저장됩니다."
         />
         <p className="mt-2 text-caption text-muted-foreground">
-          {draft.length}자 · 자동 저장 · MD 내보내기/가져오기 지원
+          {draft.length}자 · 자동 저장 · 입력 시 MD 파일 자동 백업
         </p>
       </SectionCard>
 

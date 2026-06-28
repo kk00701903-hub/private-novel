@@ -11,6 +11,7 @@ import type {
   Work,
 } from '@/types/novel';
 import { DEFAULT_SETTINGS, createEmptyEpisode, createEpisodes } from '@/types/novel';
+import { syncEpisodeFieldMd, syncWorkMetaMd, saveEpisodeAiMdNow, saveEpisodeFinalMdNow } from '@/lib/mdSync';
 
 interface NovelState {
   works: Work[];
@@ -83,6 +84,8 @@ export const useNovelStore = create<NovelState>()(
         set((s) => ({
           works: s.works.map((w) => (w.id === workId ? touchWork({ ...w, ...patch }) : w)),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) syncWorkMetaMd(work, Object.keys(patch) as Array<keyof Work>);
       },
 
       deleteWork: (workId) => {
@@ -108,6 +111,8 @@ export const useNovelStore = create<NovelState>()(
             w.id === workId ? updateEpisodeInWork(w, episodeNumber, (ep) => ({ ...ep, [field]: value })) : w,
           ),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) syncEpisodeFieldMd(work, episodeNumber, field);
       },
 
       setTotalEpisodes: (workId, count) => {
@@ -131,6 +136,8 @@ export const useNovelStore = create<NovelState>()(
             w.id === workId ? updateEpisodeInWork(w, episodeNumber, (ep) => ({ ...ep, aiResult })) : w,
           ),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) saveEpisodeAiMdNow(work, episodeNumber);
       },
 
       archiveEpisode: (workId, episodeNumber, finalText) => {
@@ -141,6 +148,8 @@ export const useNovelStore = create<NovelState>()(
               : w,
           ),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) saveEpisodeFinalMdNow(work, episodeNumber);
       },
 
       addCharacter: (workId, character) => {
@@ -154,6 +163,8 @@ export const useNovelStore = create<NovelState>()(
               : w,
           ),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) syncWorkMetaMd(work, ['characters']);
       },
 
       updateCharacter: (workId, characterId, patch) => {
@@ -167,6 +178,8 @@ export const useNovelStore = create<NovelState>()(
               : w,
           ),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) syncWorkMetaMd(work, ['characters']);
       },
 
       removeCharacter: (workId, characterId) => {
@@ -181,6 +194,8 @@ export const useNovelStore = create<NovelState>()(
               : w,
           ),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) syncWorkMetaMd(work, ['characters', 'relations']);
       },
 
       addRelation: (workId, relation) => {
@@ -189,6 +204,8 @@ export const useNovelStore = create<NovelState>()(
             w.id === workId ? touchWork({ ...w, relations: [...w.relations, relation] }) : w,
           ),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) syncWorkMetaMd(work, ['relations']);
       },
 
       removeRelation: (workId, fromId, toId) => {
@@ -202,6 +219,8 @@ export const useNovelStore = create<NovelState>()(
               : w,
           ),
         }));
+        const work = get().works.find((w) => w.id === workId);
+        if (work) syncWorkMetaMd(work, ['relations']);
       },
 
       updateSettings: (patch) => {

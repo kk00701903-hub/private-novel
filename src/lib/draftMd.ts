@@ -1,3 +1,5 @@
+import { saveMdLocally } from '@/lib/localMdStorage';
+
 const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 function parseFrontmatter(raw: string): Record<string, string> {
@@ -61,10 +63,10 @@ export function serializeFinalMd(options: {
   ].join('\n');
 }
 
-export function saveFinalMdLocally(workTitle: string, episodeNumber: number, finalText: string) {
+export async function saveFinalMdLocally(workTitle: string, episodeNumber: number, finalText: string) {
   const md = serializeFinalMd({ workTitle, episodeNumber, finalText });
   const filename = `${sanitizeFilename(workTitle)}_${episodeNumber}회차_최종본.md`;
-  downloadTextFile(filename, md);
+  await saveMdLocally(filename, md);
   return filename;
 }
 
@@ -103,18 +105,6 @@ export function sanitizeFilename(name: string): string {
   return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').replace(/\s+/g, '_').slice(0, 80) || 'draft';
 }
 
-export function downloadTextFile(filename: string, content: string, mime = 'text/markdown;charset=utf-8') {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
+import { downloadTextFile, readTextFile } from '@/lib/fileDownload';
 
-export async function readTextFile(file: File): Promise<string> {
-  return file.text();
-}
+export { downloadTextFile, readTextFile };
