@@ -8,13 +8,23 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import SectionCard from '@/components/layout/SectionCard';
+import PageToolbar from '@/components/layout/PageToolbar';
 import { checkConsistency } from '@/services/claudeService';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export default function WorksTab() {
   const works = useNovelStore((s) => s.works);
@@ -71,10 +81,9 @@ export default function WorksTab() {
   };
 
   return (
-    <div className="flex flex-col gap-5 lg:flex-row">
-      <aside className="w-full shrink-0 space-y-3 lg:w-56">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">작품 목록</h2>
+    <div className="page-stack flex flex-col lg:flex-row lg:gap-6">
+      <SectionCard title="작품 목록" className="w-full shrink-0 lg:w-56" bodyClassName="space-y-2">
+        <div className="flex justify-end">
           <Button type="button" size="sm" variant="outline" onClick={handleCreate}>
             <Plus size={14} />
           </Button>
@@ -88,50 +97,57 @@ export default function WorksTab() {
                   setWorkId(w.id);
                   setDefaultWorkForScreen('works', w.id);
                 }}
-                className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                  workId === w.id ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'
-                }`}
+                className={cn(
+                  'w-full rounded-[var(--radius-md)] px-3 py-2 text-left text-body transition-colors',
+                  workId === w.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted/70',
+                )}
               >
                 {w.title}
               </button>
             </li>
           ))}
         </ul>
-      </aside>
+      </SectionCard>
 
-      <div className="min-w-0 flex-1 space-y-4">
+      <div className="min-w-0 flex-1 page-stack">
         {!work ? (
-          <p className="text-muted-foreground">작품을 선택하거나 새로 추가하세요.</p>
+          <p className="text-body text-muted-foreground">작품을 선택하거나 새로 추가하세요.</p>
         ) : (
           <>
-            <div className="flex flex-wrap items-center gap-3">
-              <WorkSelector screen="works" value={workId} onChange={(id) => {
-                setWorkId(id);
-                setDefaultWorkForScreen('works', id);
-              }} />
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  if (confirm(`"${work.title}"을(를) 삭제할까요?`)) {
-                    deleteWork(work.id);
-                    setWorkId(works.find((w) => w.id !== work.id)?.id ?? null);
-                  }
-                }}
-              >
-                <Trash2 size={14} className="mr-1" />
-                삭제
-              </Button>
-              <Button type="button" size="sm" variant="secondary" onClick={handleConsistency} disabled={isChecking}>
-                <Search size={14} className="mr-1" />
-                {isChecking ? '검토 중…' : '일관성 검토'}
-              </Button>
-            </div>
+            <SectionCard noPadding bodyClassName="p-4 sm:p-5">
+              <PageToolbar>
+                <WorkSelector
+                  screen="works"
+                  value={workId}
+                  onChange={(id) => {
+                    setWorkId(id);
+                    setDefaultWorkForScreen('works', id);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm(`"${work.title}"을(를) 삭제할까요?`)) {
+                      deleteWork(work.id);
+                      setWorkId(works.find((w) => w.id !== work.id)?.id ?? null);
+                    }
+                  }}
+                >
+                  <Trash2 size={14} className="mr-1" />
+                  삭제
+                </Button>
+                <Button type="button" size="sm" variant="secondary" onClick={handleConsistency} disabled={isChecking}>
+                  <Search size={14} className="mr-1" />
+                  {isChecking ? '검토 중…' : '일관성 검토'}
+                </Button>
+              </PageToolbar>
+            </SectionCard>
 
-            <Accordion type="multiple" defaultValue={['basic', 'world', 'chars', 'plots']} className="space-y-2">
-              <AccordionItem value="basic" className="rounded-xl border border-border bg-card px-4">
-                <AccordionTrigger className="text-sm font-semibold">기본 정보</AccordionTrigger>
+            <Accordion type="multiple" defaultValue={['basic', 'world', 'chars', 'plots']} className="space-y-3">
+              <AccordionItem value="basic" className="overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-app-sm px-4">
+                <AccordionTrigger className="text-title font-semibold">기본 정보</AccordionTrigger>
                 <AccordionContent className="space-y-3 pb-4">
                   <div>
                     <Label>작품 제목</Label>
@@ -155,8 +171,8 @@ export default function WorksTab() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="world" className="rounded-xl border border-border bg-card px-4">
-                <AccordionTrigger className="text-sm font-semibold">
+              <AccordionItem value="world" className="overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-app-sm px-4">
+                <AccordionTrigger className="text-title font-semibold">
                   <Globe size={16} className="mr-2" />
                   세계관
                 </AccordionTrigger>
@@ -170,15 +186,15 @@ export default function WorksTab() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="chars" className="rounded-xl border border-border bg-card px-4">
-                <AccordionTrigger className="text-sm font-semibold">
+              <AccordionItem value="chars" className="overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-app-sm px-4">
+                <AccordionTrigger className="text-title font-semibold">
                   <Users size={16} className="mr-2" />
                   인물 설정 · 관계
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pb-4">
                   <ul className="space-y-2">
                     {work.characters.map((c) => (
-                      <li key={c.id} className="rounded-lg border border-border p-3">
+                      <li key={c.id} className="rounded-[var(--radius-md)] border border-border p-3">
                         <div className="flex items-start justify-between gap-2">
                           <Input
                             value={c.name}
@@ -204,7 +220,7 @@ export default function WorksTab() {
                   </ul>
                   <div className="flex flex-wrap gap-2">
                     <Input placeholder="이름" value={newCharName} onChange={(e) => setNewCharName(e.target.value)} className="max-w-[120px]" />
-                    <Input placeholder="설명" value={newCharDesc} onChange={(e) => setNewCharDesc(e.target.value)} className="flex-1 min-w-[160px]" />
+                    <Input placeholder="설명" value={newCharDesc} onChange={(e) => setNewCharDesc(e.target.value)} className="min-w-[160px] flex-1" />
                     <Button
                       type="button"
                       size="sm"
@@ -220,7 +236,7 @@ export default function WorksTab() {
                   </div>
 
                   <div className="border-t border-border pt-3">
-                    <p className="mb-2 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                    <p className="mb-2 flex items-center gap-1 text-caption font-medium text-muted-foreground">
                       <GitBranch size={14} />
                       인물 관계
                     </p>
@@ -228,7 +244,7 @@ export default function WorksTab() {
                       const from = work.characters.find((c) => c.id === r.fromId)?.name ?? '?';
                       const to = work.characters.find((c) => c.id === r.toId)?.name ?? '?';
                       return (
-                        <div key={i} className="mb-2 flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2 text-sm">
+                        <div key={i} className="mb-2 flex items-center justify-between rounded-[var(--radius-md)] bg-muted/50 px-3 py-2 text-body">
                           <span>{from} → {to}: {r.relation}</span>
                           <Button type="button" variant="ghost" size="sm" onClick={() => removeRelation(work.id, r.fromId, r.toId)}>
                             <Trash2 size={12} />
@@ -237,20 +253,28 @@ export default function WorksTab() {
                       );
                     })}
                     {work.characters.length >= 2 && (
-                      <div className="flex flex-wrap gap-2">
-                        <select className="rounded-md border border-border bg-background px-2 py-1 text-sm" value={relFrom} onChange={(e) => setRelFrom(e.target.value)}>
-                          <option value="">From</option>
-                          {work.characters.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                        <select className="rounded-md border border-border bg-background px-2 py-1 text-sm" value={relTo} onChange={(e) => setRelTo(e.target.value)}>
-                          <option value="">To</option>
-                          {work.characters.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                        <Input placeholder="관계" value={relText} onChange={(e) => setRelText(e.target.value)} className="flex-1 min-w-[100px]" />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select value={relFrom || undefined} onValueChange={setRelFrom}>
+                          <SelectTrigger size="sm" className="w-[120px]">
+                            <SelectValue placeholder="From" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {work.characters.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={relTo || undefined} onValueChange={setRelTo}>
+                          <SelectTrigger size="sm" className="w-[120px]">
+                            <SelectValue placeholder="To" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {work.characters.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input placeholder="관계" value={relText} onChange={(e) => setRelText(e.target.value)} className="min-w-[100px] flex-1" />
                         <Button
                           type="button"
                           size="sm"
@@ -268,28 +292,40 @@ export default function WorksTab() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="plots" className="rounded-xl border border-border bg-card px-4">
-                <AccordionTrigger className="text-sm font-semibold">
+              <AccordionItem value="plots" className="overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-app-sm px-4">
+                <AccordionTrigger className="text-title font-semibold">
                   <List size={16} className="mr-2" />
                   회차별 플롯
                 </AccordionTrigger>
                 <AccordionContent className="space-y-3 pb-4">
                   <EpisodeSelector work={work} episodeNumber={episodeNumber} onChange={setEpisodeNumber} />
-                  <Textarea
-                    rows={10}
-                    value={work.episodes.find((e) => e.number === episodeNumber)?.plot ?? ''}
-                    onChange={(e) => setEpisodeField(work.id, episodeNumber, 'plot', e.target.value)}
-                    placeholder={`${episodeNumber}회차 플롯`}
-                  />
+                  <div>
+                    <Label>회차 제목</Label>
+                    <Input
+                      className="mt-1"
+                      value={work.episodes.find((e) => e.number === episodeNumber)?.title ?? ''}
+                      onChange={(e) => setEpisodeField(work.id, episodeNumber, 'title', e.target.value)}
+                      placeholder={`${episodeNumber}회차 제목 (AI 집필 목록에 표시)`}
+                    />
+                  </div>
+                  <div>
+                    <Label>플롯</Label>
+                    <Textarea
+                      rows={10}
+                      className="mt-1"
+                      value={work.episodes.find((e) => e.number === episodeNumber)?.plot ?? ''}
+                      onChange={(e) => setEpisodeField(work.id, episodeNumber, 'plot', e.target.value)}
+                      placeholder={`${episodeNumber}회차 플롯`}
+                    />
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
 
             {consistencyResult && (
-              <div className="rounded-xl border border-border bg-card p-4">
-                <h3 className="mb-2 text-sm font-semibold">일관성 검토 결과</h3>
-                <pre className="whitespace-pre-wrap text-sm text-muted-foreground">{consistencyResult}</pre>
-              </div>
+              <SectionCard title="일관성 검토 결과">
+                <pre className="whitespace-pre-wrap text-body text-muted-foreground">{consistencyResult}</pre>
+              </SectionCard>
             )}
           </>
         )}

@@ -5,8 +5,10 @@ import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
 import WorkSelector from '@/components/shared/WorkSelector';
 import EpisodeSelector from '@/components/shared/EpisodeSelector';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import SectionCard from '@/components/layout/SectionCard';
+import PageToolbar from '@/components/layout/PageToolbar';
+import EditorTextarea from '@/components/layout/EditorTextarea';
 import {
   downloadTextFile,
   parseDraftMd,
@@ -134,69 +136,66 @@ export default function DraftsTab() {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5">
-      <div className="flex flex-wrap items-center gap-4">
-        <WorkSelector screen="drafts" value={workId} onChange={handleWorkChange} />
-        <EpisodeSelector work={work} episodeNumber={episodeNumber} onChange={setEpisodeNumber} />
-      </div>
+    <div className="page-stack mx-auto max-w-3xl">
+      <SectionCard noPadding bodyClassName="p-4 sm:p-5">
+        <PageToolbar>
+          <WorkSelector screen="drafts" value={workId} onChange={handleWorkChange} />
+          <EpisodeSelector work={work} episodeNumber={episodeNumber} onChange={setEpisodeNumber} />
+        </PageToolbar>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button type="button" variant="secondary" size="sm" onClick={saveNow} disabled={!workId}>
+            <Save size={14} className="mr-1.5" />
+            지금 저장
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={exportMd} disabled={!work}>
+            <Download size={14} className="mr-1.5" />
+            MD 파일로 저장
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!workId}
+          >
+            <Upload size={14} className="mr-1.5" />
+            MD 파일 불러오기
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".md,.markdown,.txt,text/markdown,text/plain"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </div>
+      </SectionCard>
 
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="secondary" size="sm" onClick={saveNow} disabled={!workId}>
-          <Save size={14} className="mr-1.5" />
-          지금 저장
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={exportMd} disabled={!work}>
-          <Download size={14} className="mr-1.5" />
-          MD 파일로 저장
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={!workId}
-        >
-          <Upload size={14} className="mr-1.5" />
-          MD 파일 불러오기
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".md,.markdown,.txt,text/markdown,text/plain"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-      </div>
-
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <Label htmlFor="draft-input">초안 ({episodeNumber}회차)</Label>
-        <Textarea
+      <SectionCard title={`초안 (${episodeNumber}회차)`}>
+        <EditorTextarea
           id="draft-input"
           rows={14}
-          className="mt-2 font-mono text-sm"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="회차 초안을 입력하세요. 자동 저장됩니다."
         />
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-caption text-muted-foreground">
           {draft.length}자 · 자동 저장 · MD 내보내기/가져오기 지원
         </p>
-      </div>
+      </SectionCard>
 
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <Label htmlFor="direction-input">각색 방향</Label>
-        <Textarea
+      <SectionCard title="각색 방향">
+        <EditorTextarea
           id="direction-input"
           rows={6}
-          className="mt-2 text-sm"
           value={direction}
           onChange={(e) => setDirection(e.target.value)}
           placeholder="예: 긴장감을 높이고, 이든의 내면 독백을 강화하세요."
         />
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-caption text-muted-foreground">
           MD 파일 frontmatter의 direction 필드로 함께 저장·불러옵니다.
         </p>
-      </div>
+      </SectionCard>
     </div>
   );
 }

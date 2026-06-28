@@ -16,6 +16,7 @@ export interface CharacterRelation {
 
 export interface Episode {
   number: number;
+  title: string;
   plot: string;
   draft: string;
   rewriteDirection: string;
@@ -60,6 +61,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 export function createEmptyEpisode(number: number): Episode {
   return {
     number,
+    title: '',
     plot: '',
     draft: '',
     rewriteDirection: '',

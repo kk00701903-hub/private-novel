@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import imageCompression from 'browser-image-compression';
 import { Download, Image as ImageIcon, ImageDown, Loader2, Upload } from 'lucide-react';
+import SectionCard from '@/components/layout/SectionCard';
+import { cn } from '@/lib/utils';
 
 interface ImageInfo {
   file: File;
@@ -82,19 +84,16 @@ export default function CompressTab() {
     anchor.remove();
   };
 
-  const reductionRate = original && compressed ? Math.max(0, Math.round((1 - compressed.size / original.size) * 100)) : 0;
+  const reductionRate =
+    original && compressed ? Math.max(0, Math.round((1 - compressed.size / original.size) * 100)) : 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-      {/* @section: compression-intro */}
-      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-card-foreground">🖼️ 표지/삽화 압축</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          웹소설 플랫폼 업로드용 이미지를 1MB 이하로 자동 압축합니다. 모든 처리는 브라우저 안에서 수행됩니다.
-        </p>
-      </div>
+    <div className="page-stack w-full max-w-5xl">
+      <SectionCard
+        title="표지/삽화 압축"
+        description="웹소설 플랫폼 업로드용 이미지를 1MB 이하로 자동 압축합니다. 모든 처리는 브라우저 안에서 수행됩니다."
+      />
 
-      {/* @section: image-dropzone */}
       <div
         onDrop={handleDrop}
         onDragOver={(event) => {
@@ -103,75 +102,75 @@ export default function CompressTab() {
         }}
         onDragLeave={() => setIsDragOver(false)}
         onClick={() => fileInputRef.current?.click()}
-        className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed p-10 text-center transition-all duration-200 ${
+        className={cn(
+          'flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[var(--radius-xl)] border-2 border-dashed p-10 text-center transition-all duration-200',
           isDragOver
-            ? 'border-primary bg-teal-50 shadow-md'
-            : 'border-border bg-white hover:border-primary/40 hover:bg-slate-50'
-        }`}
+            ? 'border-primary bg-primary/5 shadow-app-md'
+            : 'border-border bg-card hover:border-primary/40 hover:bg-muted/40',
+        )}
       >
-        <div className="rounded-2xl bg-secondary p-4">
+        <div className="rounded-[var(--radius)] bg-secondary p-4">
           <Upload size={34} className={isDragOver ? 'text-primary' : 'text-muted-foreground'} />
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-body text-muted-foreground">
           이미지를 여기에 드래그하거나 <span className="font-semibold text-primary">클릭하여 선택</span>
         </p>
-        <p className="text-xs text-muted-foreground">JPG, PNG, WebP, GIF 등 이미지 형식 지원 · maxSizeMB: 1</p>
+        <p className="text-caption text-muted-foreground">JPG, PNG, WebP, GIF 등 이미지 형식 지원 · maxSizeMB: 1</p>
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
       </div>
 
       {isCompressing && (
-        <div className="flex items-center justify-center gap-3 rounded-2xl border border-border bg-card py-8">
+        <SectionCard variant="flat" bodyClassName="flex items-center justify-center gap-3 py-8">
           <Loader2 size={24} className="animate-spin text-primary" />
-          <span className="text-sm text-card-foreground">이미지 압축 중...</span>
-        </div>
+          <span className="text-body text-foreground">이미지 압축 중...</span>
+        </SectionCard>
       )}
 
       {error && (
-        <p className="rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          ⚠️ {error}
+        <p className="rounded-[var(--radius)] border border-destructive/40 bg-destructive/10 px-4 py-3 text-body text-destructive">
+          {error}
         </p>
       )}
 
-      {/* @section: compression-comparison */}
       {original && compressed && !isCompressing && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+          <SectionCard variant="flat" noPadding bodyClassName="p-0">
             <div className="flex items-center gap-2 border-b border-border px-4 py-3">
               <ImageIcon size={15} className="text-muted-foreground" />
-              <span className="text-sm font-semibold text-card-foreground">원본 이미지</span>
-              <span className="ml-auto rounded-full bg-amber-100 px-2.5 py-1 font-mono text-xs text-amber-800">
+              <span className="text-body font-semibold">원본 이미지</span>
+              <span className="ml-auto rounded-full bg-warning/15 px-2.5 py-1 font-mono text-caption text-warning">
                 {formatSize(original.size)}
               </span>
             </div>
             <div className="p-3">
-              <img src={original.url} alt="원본" className="h-60 w-full rounded-xl bg-background object-contain" />
-              <p className="mt-3 truncate text-xs text-muted-foreground">{original.file.name}</p>
+              <img src={original.url} alt="원본" className="h-60 w-full rounded-[var(--radius-md)] bg-background object-contain" />
+              <p className="mt-3 truncate text-caption text-muted-foreground">{original.file.name}</p>
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+          <SectionCard variant="flat" noPadding bodyClassName="p-0">
             <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-              <ImageDown size={15} className="text-emerald-600" />
-              <span className="text-sm font-semibold text-card-foreground">압축 결과</span>
-              <span className="ml-auto rounded-full bg-emerald-100 px-2.5 py-1 font-mono text-xs text-emerald-800">
+              <ImageDown size={15} className="text-success" />
+              <span className="text-body font-semibold">압축 결과</span>
+              <span className="ml-auto rounded-full bg-success/10 px-2.5 py-1 font-mono text-caption text-success">
                 {formatSize(compressed.size)}
               </span>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-700">
+              <span className="rounded-full border border-success/20 bg-success/5 px-2 py-1 text-caption text-success">
                 {reductionRate}% 감소
               </span>
             </div>
             <div className="p-3">
-              <img src={compressed.url} alt="압축본" className="h-60 w-full rounded-xl bg-background object-contain" />
+              <img src={compressed.url} alt="압축본" className="h-60 w-full rounded-[var(--radius-md)] bg-background object-contain" />
               <button
                 type="button"
                 onClick={handleDownload}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-primary px-4 py-3 text-body font-semibold text-primary-foreground transition-all hover:brightness-110"
               >
                 <Download size={16} />
                 다운로드
               </button>
             </div>
-          </div>
+          </SectionCard>
         </div>
       )}
     </div>

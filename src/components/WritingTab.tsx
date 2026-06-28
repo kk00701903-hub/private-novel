@@ -4,11 +4,14 @@ import { toast } from 'sonner';
 import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
 import WorkSelector from '@/components/shared/WorkSelector';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { rewriteEpisode } from '@/services/claudeService';
 import { saveFinalMdLocally } from '@/lib/draftMd';
-import { cn } from '@/lib/utils';
+import { getEpisodeDisplayTitle } from '@/lib/episodeUtils';
+import SectionCard from '@/components/layout/SectionCard';
+import PageToolbar from '@/components/layout/PageToolbar';
+import EditorTextarea from '@/components/layout/EditorTextarea';
+import EpisodeRow from '@/components/layout/EpisodeRow';
 
 export default function WritingTab() {
   const works = useNovelStore((s) => s.works);
@@ -91,17 +94,12 @@ export default function WritingTab() {
     }
   }, [work, workId, selectedEpisode, editText, archiveEpisode]);
 
-  const episodeStatus = (n: number) => {
-    const ep = work?.episodes.find((e) => e.number === n);
-    if (ep?.finalText.trim()) return 'saved';
-    if (ep?.aiResult.trim()) return 'draft';
-    return 'empty';
-  };
+  const selectedTitle = episode ? getEpisodeDisplayTitle(episode) : '';
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-4">
+    <div className="page-stack min-h-[calc(100dvh-var(--header-h)-var(--bottom-nav-h))] md:min-h-[calc(100dvh-var(--header-h))]">
+      <SectionCard noPadding bodyClassName="p-4 sm:p-5">
+        <PageToolbar>
           <WorkSelector
             screen="writing"
             value={workId}
@@ -110,83 +108,74 @@ export default function WritingTab() {
               setDefaultWorkForScreen('writing', id);
             }}
           />
-          <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
+          <span className="rounded-full border border-border bg-muted/50 px-3 py-1 text-caption font-medium text-primary">
             {modeLabel}
           </span>
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          회차별 AI 집필 → 내용 수정 → 저장 시 저장 탭에 반영되고 MD 파일이 다운로드됩니다.
-        </p>
-      </div>
+        </PageToolbar>
+      </SectionCard>
 
       {!work ? (
-        <p className="text-muted-foreground">작품을 선택하세요.</p>
+        <p className="text-body text-muted-foreground">작품을 선택하세요.</p>
       ) : (
         <>
-          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
-            <h2 className="mb-3 text-sm font-semibold">회차 목록</h2>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <SectionCard title="회차 목록" noPadding bodyClassName="p-0">
+            <ul className="max-h-56 divide-y divide-border overflow-y-auto md:max-h-64">
               {work.episodes.map((ep) => {
-                const status = episodeStatus(ep.number);
                 const isLoading = loadingEpisode === ep.number;
                 const isSelected = selectedEpisode === ep.number;
                 return (
-                  <div
+                  <EpisodeRow
                     key={ep.number}
-                    className={cn(
-                      'flex flex-col gap-2 rounded-xl border p-3 transition-colors',
-                      isSelected ? 'border-primary bg-primary/5' : 'border-border bg-white shadow-sm',
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setSelectedEpisode(ep.number)}
-                      className="text-left text-sm font-semibold"
-                    >
-                      {ep.number}회차
-                      {status === 'saved' && (
-                        <span className="ml-1 text-[10px] font-normal text-emerald-600">저장됨</span>
-                      )}
-                      {status === 'draft' && (
-                        <span className="ml-1 text-[10px] font-normal text-amber-600">집필됨</span>
-                      )}
-                    </button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={isSelected ? 'default' : 'outline'}
-                      disabled={isLoading || loadingEpisode !== null}
-                      onClick={() => void handleAiWrite(ep.number)}
-                      className="w-full text-xs"
-                    >
-                      {isLoading ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <>
-                          <Sparkles size={14} className="mr-1" />
-                          AI 집필
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                    number={ep.number}
+                    title={getEpisodeDisplayTitle(ep)}
+                    selected={isSelected}
+                    finalText={ep.finalText}
+                    aiResult={ep.aiResult}
+                    onSelect={() => setSelectedEpisode(ep.number)}
+                    action={
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isSelected ? 'default' : 'outline'}
+                        disabled={isLoading || (loadingEpisode !== null && !isLoading)}
+                        onClick={() => void handleAiWrite(ep.number)}
+                        className="shrink-0 text-caption"
+                      >
+                        {isLoading ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <>
+                            <Sparkles size={14} className="mr-1" />
+                            AI 집필
+                          </>
+                        )}
+                      </Button>
+                    }
+                  />
                 );
               })}
-            </div>
-          </div>
+            </ul>
+          </SectionCard>
 
-          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <Label>{selectedEpisode}회차 · 집필 내용 편집</Label>
-              <span className="text-xs text-muted-foreground">{editText.length}자</span>
+          <SectionCard
+            variant="editor"
+            className="flex min-h-0 flex-1 flex-col"
+            noPadding
+            bodyClassName="flex min-h-0 flex-1 flex-col p-4 sm:p-5"
+          >
+            <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
+              <Label className="text-title font-semibold">
+                {selectedEpisode}회차 · {selectedTitle}
+              </Label>
+              <span className="text-caption text-muted-foreground">{editText.length}자</span>
             </div>
-            <Textarea
-              rows={18}
-              className="font-mono text-sm"
+            <EditorTextarea
+              fill
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               placeholder={`${selectedEpisode}회차 AI 집필 버튼을 누른 뒤 내용이 표시됩니다.`}
             />
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex shrink-0 flex-wrap items-center gap-3">
               <Button type="button" onClick={handleSave} disabled={saving || !editText.trim()}>
                 {saving ? (
                   <Loader2 size={16} className="mr-2 animate-spin" />
@@ -196,13 +185,13 @@ export default function WritingTab() {
                 저장 (저장 탭 + MD 파일)
               </Button>
               {episode?.finalText && editText === episode.finalText && (
-                <span className="flex items-center gap-1 text-xs text-emerald-600">
+                <span className="flex items-center gap-1 text-caption text-success">
                   <Check size={14} />
                   저장 탭에 반영됨
                 </span>
               )}
             </div>
-          </div>
+          </SectionCard>
         </>
       )}
     </div>

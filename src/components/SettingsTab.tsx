@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import SectionCard from '@/components/layout/SectionCard';
 import { Search } from 'lucide-react';
 import { checkConsistency } from '@/services/claudeService';
 import { toast } from 'sonner';
@@ -53,17 +54,15 @@ export default function SettingsTab() {
   };
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <h2 className="text-base font-semibold">Claude API</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Anthropic API Key (브라우저에서 직접 호출)</p>
-        <div className="mt-4 space-y-3">
+    <div className="page-stack mx-auto max-w-3xl">
+      <SectionCard title="Claude API" description="Anthropic API Key (브라우저에서 직접 호출)">
+        <div className="space-y-3">
           <div>
             <Label htmlFor="api-key">API Key</Label>
             <Input
               id="api-key"
               type="password"
-              className="mt-1"
+              className="mt-1 font-mono text-caption"
               value={settings.claudeApiKey}
               onChange={(e) => updateSettings({ claudeApiKey: e.target.value })}
               placeholder="sk-ant-..."
@@ -73,17 +72,16 @@ export default function SettingsTab() {
             <Label htmlFor="model">모델</Label>
             <Input
               id="model"
-              className="mt-1"
+              className="mt-1 font-mono text-caption"
               value={settings.claudeModel}
               onChange={(e) => updateSettings({ claudeModel: e.target.value })}
             />
           </div>
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <h2 className="text-base font-semibold">집필 모드</h2>
-        <div className="mt-3 flex flex-wrap gap-2">
+      <SectionCard title="집필 모드">
+        <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant={settings.rewriteMode === 'draft' ? 'default' : 'outline'}
@@ -99,17 +97,16 @@ export default function SettingsTab() {
             플롯 + 이전 회차
           </Button>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-caption text-muted-foreground">
           초안 모드: 초안과 각색 방향을 보고 재작성 · 플롯 모드: 이전 회차와 플롯을 보고 집필
         </p>
-      </section>
+      </SectionCard>
 
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <h2 className="text-base font-semibold">화면별 기본 작품</h2>
-        <div className="mt-4 space-y-3">
+      <SectionCard title="화면별 기본 작품">
+        <div className="space-y-3">
           {(Object.keys(SCREEN_LABELS) as ScreenId[]).map((screen) => (
             <div key={screen} className="flex flex-wrap items-center gap-3">
-              <span className="w-24 text-sm text-muted-foreground">{SCREEN_LABELS[screen]}</span>
+              <span className="w-24 text-body text-muted-foreground">{SCREEN_LABELS[screen]}</span>
               <WorkSelector
                 screen={screen}
                 value={settings.defaultWorkByScreen[screen]}
@@ -119,13 +116,10 @@ export default function SettingsTab() {
             </div>
           ))}
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <h2 className="text-base font-semibold">문체 · 요구사항 (작품별)</h2>
-        <div className="mt-3">
-          <WorkSelector screen="settings" value={styleWorkId} onChange={setStyleWorkId} />
-        </div>
+      <SectionCard title="문체 · 요구사항 (작품별)">
+        <WorkSelector screen="settings" value={styleWorkId} onChange={setStyleWorkId} />
         {styleWork && (
           <div className="mt-4 space-y-3">
             <div>
@@ -148,25 +142,21 @@ export default function SettingsTab() {
             </div>
           </div>
         )}
-      </section>
+      </SectionCard>
 
-      <section className="rounded-2xl border border-border bg-card p-5">
-        <h2 className="text-base font-semibold">전체 일관성 검토</h2>
-        <p className="mt-1 text-sm text-muted-foreground">모든 작품의 설정·회차를 검토합니다.</p>
-        <Button type="button" className="mt-3" variant="secondary" onClick={handleConsistencyAll} disabled={isChecking}>
+      <SectionCard title="전체 일관성 검토" description="모든 작품의 설정·회차를 검토합니다.">
+        <Button type="button" variant="secondary" onClick={handleConsistencyAll} disabled={isChecking}>
           <Search size={14} className="mr-2" />
           {isChecking ? '검토 중…' : '전체 검토 실행'}
         </Button>
         {consistencyResult && (
-          <pre className="mt-4 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-background p-3 text-xs">
+          <pre className="mt-4 max-h-64 overflow-auto whitespace-pre-wrap rounded-[var(--radius-md)] bg-muted/40 p-3 font-mono text-caption">
             {consistencyResult}
           </pre>
         )}
-      </section>
+      </SectionCard>
 
-      <section>
-        <CompressTab />
-      </section>
+      <CompressTab />
     </div>
   );
 }

@@ -13,7 +13,8 @@ const navItems = [
 export default function BottomNav() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 shadow-app-md backdrop-blur-sm md:hidden"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="하단 탭"
     >
       <div className="mx-auto flex max-w-lg items-stretch justify-around">
@@ -23,13 +24,20 @@ export default function BottomNav() {
             to={to}
             className={({ isActive }) =>
               cn(
-                'flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition-colors',
+                'relative flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2.5 text-[10px] font-medium transition-colors',
                 isActive ? 'text-primary' : 'text-muted-foreground',
               )
             }
           >
-            <Icon size={20} />
-            <span className="truncate">{label}</span>
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-primary" aria-hidden />
+                )}
+                <Icon size={20} strokeWidth={isActive ? 2.25 : 2} />
+                <span className="truncate">{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>
@@ -39,17 +47,20 @@ export default function BottomNav() {
 
 export function DesktopNav() {
   return (
-    <nav className="hidden flex-wrap gap-2 md:flex" aria-label="상단 탭">
+    <nav
+      className="hidden gap-1 rounded-[var(--radius)] bg-muted/60 p-1 md:inline-flex"
+      aria-label="상단 탭"
+    >
       {navItems.map(({ to, label, icon: Icon }) => (
         <NavLink
           key={to}
           to={to}
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all',
+              'flex items-center gap-2 rounded-[var(--radius-md)] px-4 py-2 text-body font-medium transition-all',
               isActive
-                ? 'border-primary bg-primary text-primary-foreground shadow-[0_12px_28px_-18px_rgba(20,184,166,0.9)]'
-                : 'border-border bg-white text-foreground shadow-sm hover:border-primary/40 hover:bg-primary/5',
+                ? 'bg-primary text-primary-foreground shadow-app-sm'
+                : 'text-muted-foreground hover:bg-card hover:text-foreground',
             )
           }
         >

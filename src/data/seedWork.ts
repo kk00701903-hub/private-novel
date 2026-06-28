@@ -8,15 +8,18 @@ export function createSeedWork(): Work {
 
   episodes[0] = {
     ...episodes[0],
+    title: '이든의 각성',
     finalText: PREV_EPISODES[1] ?? '',
   };
   episodes[1] = {
     ...episodes[1],
+    title: '왕궁 잠입',
     plot: PLOTS[2] ?? '',
     finalText: PREV_EPISODES[2] ?? '',
   };
   episodes[2] = {
     ...episodes[2],
+    title: '고대 언어',
     plot: PLOTS[3] ?? '',
   };
 
