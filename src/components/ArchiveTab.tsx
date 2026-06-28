@@ -1,27 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Save, FileText } from 'lucide-react';
+import { Archive, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
 import WorkSelector from '@/components/shared/WorkSelector';
 import EpisodeSelector from '@/components/shared/EpisodeSelector';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { saveFinalMdLocally } from '@/lib/draftMd';
+import { cn } from '@/lib/utils';
 
 export default function ArchiveTab() {
   const works = useNovelStore((s) => s.works);
   const settings = useNovelStore((s) => s.settings);
-  const archiveEpisode = useNovelStore((s) => s.archiveEpisode);
   const setDefaultWorkForScreen = useNovelStore((s) => s.setDefaultWorkForScreen);
 
   const [workId, setWorkId] = useState<string | null>(() =>
     resolveWorkId('archive', works, settings),
   );
   const [episodeNumber, setEpisodeNumber] = useState(1);
-  const [editText, setEditText] = useState('');
 
   const work = works.find((w) => w.id === workId);
   const episode = work?.episodes.find((e) => e.number === episodeNumber);
+  const savedEpisodes = work?.episodes.filter((e) => e.finalText.trim()) ?? [];
 
   useEffect(() => {
     if (!workId && works.length > 0) {
@@ -29,32 +29,24 @@ export default function ArchiveTab() {
     }
   }, [workId, works, settings]);
 
-  useEffect(() => {
-    const source = episode?.aiResult || episode?.finalText || '';
-    setEditText(source);
-  }, [workId, episodeNumber, episode?.aiResult, episode?.finalText]);
-
-  const handleSave = () => {
-    if (!workId || !editText.trim()) {
-      toast.error('저장할 내용이 없습니다.');
+  const handleExportMd = () => {
+    if (!work || !episode?.finalText.trim()) {
+      toast.error('저장된 최종본이 없습니다. AI 집필 탭에서 먼저 저장하세요.');
       return;
     }
-    archiveEpisode(workId, episodeNumber, editText);
-    toast.success(`${episodeNumber}회차 최종본이 저장되었습니다.`);
+    const filename = saveFinalMdLocally(work.title, episodeNumber, episode.finalText);
+    toast.success(`${filename} 다운로드`);
   };
-
-  const aiOriginal = episode?.aiResult ?? '';
-  const hasDiff = aiOriginal && editText !== aiOriginal;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <div className="rounded-2xl border border-border bg-card p-4">
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <Save size={18} className="text-primary" />
-          결과 저장
+          <Archive size={18} className="text-primary" />
+          저장된 회차
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          AI 집필 탭에서 생성된 결과를 확인·편집한 뒤 최종본으로 저장합니다.
+          AI 집필 탭에서 저장한 최종본이 여기에 표시됩니다. MD 파일로 다시 내려받을 수 있습니다.
         </p>
       </div>
 
@@ -70,37 +62,55 @@ export default function ArchiveTab() {
         <EpisodeSelector work={work} episodeNumber={episodeNumber} onChange={setEpisodeNumber} />
       </div>
 
-      {episode?.aiResult && (
-        <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3 text-xs text-muted-foreground">
-          <FileText size={14} className="mb-1 inline text-primary" />
-          {' '}메인 탭 AI 결과가 있습니다. 아래에서 편집 후 저장하세요.
+      {work && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
+            저장된 회차 ({savedEpisodes.length}/{work.totalEpisodes})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {work.episodes.map((ep) => (
+              <button
+                key={ep.number}
+                type="button"
+                onClick={() => setEpisodeNumber(ep.number)}
+                className={cn(
+                  'rounded-lg border px-3 py-1.5 text-xs transition-colors',
+                  ep.finalText.trim()
+                    ? episodeNumber === ep.number
+                      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-300'
+                      : 'border-emerald-500/40 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10'
+                    : episodeNumber === ep.number
+                      ? 'border-border bg-secondary text-muted-foreground'
+                      : 'border-border/50 text-muted-foreground/50',
+                )}
+              >
+                {ep.number}회
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <Label>편집 · 최종본 ({episodeNumber}회차)</Label>
-        <Textarea
-          rows={16}
-          className="mt-2 font-mono text-sm"
-          value={editText}
-          onChange={(e) => setEditText(e.target.value)}
-          placeholder="AI 결과가 없으면 직접 입력할 수 있습니다."
-        />
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Button type="button" onClick={handleSave}>
-            <Save size={16} className="mr-2" />
-            최종본으로 저장
-          </Button>
-          <span className="text-xs text-muted-foreground">{editText.length}자</span>
-        </div>
-      </div>
-
-      {hasDiff && (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h3 className="mb-2 text-sm font-semibold">AI 원본 (참고)</h3>
-          <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs text-muted-foreground">
-            {aiOriginal}
+      {episode?.finalText ? (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <Label>{episodeNumber}회차 최종본</Label>
+            <Button type="button" variant="outline" size="sm" onClick={handleExportMd}>
+              <Download size={14} className="mr-1.5" />
+              MD 다운로드
+            </Button>
+          </div>
+          <pre className="max-h-[480px] overflow-auto whitespace-pre-wrap rounded-lg bg-background p-4 font-mono text-sm">
+            {episode.finalText}
           </pre>
+          <p className="mt-2 text-xs text-muted-foreground">{episode.finalText.length}자</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
+          <FileText size={32} className="mx-auto mb-2 opacity-40" />
+          {episodeNumber}회차에 저장된 내용이 없습니다.
+          <br />
+          AI 집필 탭에서 집필 후 저장하세요.
         </div>
       )}
     </div>
