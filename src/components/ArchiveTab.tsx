@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Archive, Download, FileText } from 'lucide-react';
+import { Archive, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
 import WorkSelector from '@/components/shared/WorkSelector';
 import EpisodeSelector from '@/components/shared/EpisodeSelector';
-import { Button } from '@/components/ui/button';
 import SectionCard from '@/components/layout/SectionCard';
 import PageToolbar from '@/components/layout/PageToolbar';
 import EmptyState from '@/components/layout/EmptyState';
-import { saveFinalMdLocally } from '@/lib/draftMd';
+import SaveActionGroup from '@/components/layout/SaveActionGroup';
+import { saveEpisodeFinalMd } from '@/lib/mdSync';
 import { cn } from '@/lib/utils';
 
 export default function ArchiveTab() {
@@ -31,13 +31,9 @@ export default function ArchiveTab() {
     }
   }, [workId, works, settings]);
 
-  const handleExportMd = async () => {
-    if (!work || !episode?.finalText.trim()) {
-      toast.error('저장된 최종본이 없습니다. AI 집필 탭에서 먼저 저장하세요.');
-      return;
-    }
-    const filename = await saveFinalMdLocally(work.title, episodeNumber, episode.finalText);
-    toast.success(`${filename} 저장`);
+  const handleExportMd = () => {
+    if (!work) return { success: false, message: '작품을 선택하세요.' };
+    return saveEpisodeFinalMd(work, episodeNumber);
   };
 
   return (
@@ -96,10 +92,14 @@ export default function ArchiveTab() {
         <SectionCard
           title={`${episodeNumber}회차 최종본`}
           action={
-            <Button type="button" variant="outline" size="sm" onClick={handleExportMd}>
-              <Download size={14} className="mr-1.5" />
-              MD 다운로드
-            </Button>
+            work ? (
+              <SaveActionGroup
+                onSave={() => toast.success('저장 탭에 반영된 본문입니다.')}
+                onSaveMd={handleExportMd}
+                saveDisabled={!episode?.finalText.trim()}
+                disabled={!episode?.finalText.trim()}
+              />
+            ) : undefined
           }
         >
           <pre className="max-h-[480px] overflow-auto whitespace-pre-wrap rounded-[var(--radius-md)] bg-editor p-4 text-body leading-prose text-foreground">

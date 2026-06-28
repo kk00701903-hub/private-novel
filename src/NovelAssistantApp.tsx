@@ -24,14 +24,14 @@ export default function NovelAssistantApp() {
   const activeWork = works.find((w) => w.id === activeWorkId);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="relative flex min-h-screen flex-col pb-[var(--bottom-nav-h)] md:pb-0">
+    <div className="app-viewport bg-background text-foreground">
+      <div className="relative flex min-h-dvh flex-col pb-[var(--bottom-nav-h)] md:pb-0">
         <header className="sticky top-0 z-40 shrink-0 border-b border-border bg-card/90 shadow-app-sm backdrop-blur-sm">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 md:flex-row md:items-end md:justify-between md:px-8">
+          <div className="app-shell flex flex-col gap-3 px-4 py-4 md:flex-row md:items-end md:justify-between md:px-8">
             <div>
               <h1 className="text-display font-bold tracking-tight">웹소설 AI 편집 어시스턴트</h1>
               <p className="mt-1 text-caption text-muted-foreground">
-                {works.length > 0 ? `${works.length}개 작품 · 자동 저장 · MD 백업` : '작품을 추가해 시작하세요'}
+                {works.length > 0 ? `${works.length}개 작품 · 자동 저장` : '작품을 추가해 시작하세요'}
               </p>
             </div>
             {activeWork && (
@@ -41,13 +41,13 @@ export default function NovelAssistantApp() {
               </div>
             )}
           </div>
-          <div className="mx-auto max-w-7xl px-4 pb-3 md:px-8">
+          <div className="app-shell px-4 pb-3 md:px-8">
             <DesktopNav />
           </div>
         </header>
 
         <main className="flex-1 px-4 py-6 md:px-8">
-          <div className="mx-auto max-w-7xl">
+          <div className="app-shell">
             <Outlet />
           </div>
         </main>

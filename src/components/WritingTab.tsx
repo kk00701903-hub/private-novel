@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Check, Loader2, Save, Sparkles } from 'lucide-react';
+import { Check, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
 import WorkSelector from '@/components/shared/WorkSelector';
@@ -11,6 +11,9 @@ import SectionCard from '@/components/layout/SectionCard';
 import PageToolbar from '@/components/layout/PageToolbar';
 import EditorTextarea from '@/components/layout/EditorTextarea';
 import EpisodeRow from '@/components/layout/EpisodeRow';
+import SaveActionGroup from '@/components/layout/SaveActionGroup';
+import SaveMdButton from '@/components/layout/SaveMdButton';
+import { saveEpisodeAiMd, saveEpisodeFinalMd } from '@/lib/mdSync';
 
 export default function WritingTab() {
   const works = useNovelStore((s) => s.works);
@@ -86,7 +89,7 @@ export default function WritingTab() {
     setSaving(true);
     try {
       archiveEpisode(workId, selectedEpisode, editText);
-      toast.success(`${selectedEpisode}회차 저장 완료 · 저장 탭 및 MD 파일`);
+      toast.success(`${selectedEpisode}회차가 저장 탭에 반영되었습니다.`);
     } finally {
       setSaving(false);
     }
@@ -95,8 +98,8 @@ export default function WritingTab() {
   const selectedTitle = episode ? getEpisodeDisplayTitle(episode) : '';
 
   return (
-    <div className="page-stack min-h-[calc(100dvh-var(--header-h)-var(--bottom-nav-h))] md:min-h-[calc(100dvh-var(--header-h))]">
-      <SectionCard noPadding bodyClassName="p-4 sm:p-5">
+    <div className="flex flex-col gap-4">
+      <SectionCard noPadding bodyClassName="shrink-0 p-4 sm:p-5">
         <PageToolbar>
           <WorkSelector
             screen="writing"
@@ -115,9 +118,14 @@ export default function WritingTab() {
       {!work ? (
         <p className="text-body text-muted-foreground">작품을 선택하세요.</p>
       ) : (
-        <>
-          <SectionCard title="회차 목록" noPadding bodyClassName="p-0">
-            <ul className="max-h-56 divide-y divide-border overflow-y-auto md:max-h-64">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start">
+          <SectionCard
+            title="회차 목록"
+            className="flex w-full shrink-0 flex-col md:w-[min(280px,38%)] md:min-w-[220px]"
+            noPadding
+            bodyClassName="flex flex-col p-0"
+          >
+            <ul className="max-h-64 divide-y divide-border overflow-y-auto md:max-h-[min(70vh,32rem)]">
               {work.episodes.map((ep) => {
                 const isLoading = loadingEpisode === ep.number;
                 const isSelected = selectedEpisode === ep.number;
@@ -157,9 +165,9 @@ export default function WritingTab() {
 
           <SectionCard
             variant="editor"
-            className="flex min-h-0 flex-1 flex-col"
+            className="flex min-w-0 flex-1 flex-col"
             noPadding
-            bodyClassName="flex min-h-0 flex-1 flex-col p-4 sm:p-5"
+            bodyClassName="flex flex-col p-4 sm:p-5"
           >
             <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
               <Label className="text-title font-semibold">
@@ -174,14 +182,19 @@ export default function WritingTab() {
               placeholder={`${selectedEpisode}회차 AI 집필 버튼을 누른 뒤 내용이 표시됩니다.`}
             />
             <div className="mt-4 flex shrink-0 flex-wrap items-center gap-3">
-              <Button type="button" onClick={handleSave} disabled={saving || !editText.trim()}>
-                {saving ? (
-                  <Loader2 size={16} className="mr-2 animate-spin" />
-                ) : (
-                  <Save size={16} className="mr-2" />
-                )}
-                저장 (저장 탭 + MD 파일)
-              </Button>
+              <SaveActionGroup
+                onSave={handleSave}
+                onSaveMd={() => saveEpisodeFinalMd(work, selectedEpisode, editText)}
+                mdLabel="최종본 MD 저장"
+                saving={saving}
+                disabled={!editText.trim()}
+                saveDisabled={!editText.trim()}
+              />
+              <SaveMdButton
+                label="AI집필 MD 저장"
+                onSave={() => saveEpisodeAiMd(work, selectedEpisode, editText)}
+                disabled={!editText.trim()}
+              />
               {episode?.finalText && editText === episode.finalText && (
                 <span className="flex items-center gap-1 text-caption text-success">
                   <Check size={14} />
@@ -190,7 +203,7 @@ export default function WritingTab() {
               )}
             </div>
           </SectionCard>
-        </>
+        </div>
       )}
     </div>
   );

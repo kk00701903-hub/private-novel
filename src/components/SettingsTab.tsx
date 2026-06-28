@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import SectionCard from '@/components/layout/SectionCard';
-import { Search, FolderOpen, Download, FolderX } from 'lucide-react';
+import SaveActionGroup from '@/components/layout/SaveActionGroup';
+import { Search, FolderOpen, Download, FolderX, Trash2 } from 'lucide-react';
 import { checkConsistency } from '@/services/claudeService';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
@@ -18,7 +19,8 @@ import {
   pickMdSaveFolder,
   supportsMdFolderPicker,
 } from '@/lib/localMdStorage';
-import { exportAllWorksMd } from '@/lib/mdSync';
+import { exportAllWorksMd, saveStyleMd } from '@/lib/mdSync';
+import { isLocalDev } from '@/lib/isLocalDev';
 
 const SCREEN_LABELS: Record<ScreenId, string> = {
   writing: 'AI 집필',
@@ -35,8 +37,12 @@ export default function SettingsTab() {
   const setRewriteMode = useNovelStore((s) => s.setRewriteMode);
   const setDefaultWorkForScreen = useNovelStore((s) => s.setDefaultWorkForScreen);
   const updateWork = useNovelStore((s) => s.updateWork);
+  const deleteWork = useNovelStore((s) => s.deleteWork);
 
   const [styleWorkId, setStyleWorkId] = useState<string | null>(
+    settings.defaultWorkByScreen.settings ?? works[0]?.id ?? null,
+  );
+  const [deleteWorkId, setDeleteWorkId] = useState<string | null>(
     settings.defaultWorkByScreen.settings ?? works[0]?.id ?? null,
   );
   const [consistencyResult, setConsistencyResult] = useState('');
@@ -45,6 +51,18 @@ export default function SettingsTab() {
   const [isExportingMd, setIsExportingMd] = useState(false);
 
   const styleWork = works.find((w) => w.id === styleWorkId);
+  const workToDelete = works.find((w) => w.id === deleteWorkId);
+
+  const handleDeleteWork = () => {
+    if (!workToDelete) return;
+    if (!confirm(`"${workToDelete.title}"을(를) 삭제할까요? 이 작업은 되돌릴 수 없습니다.`)) return;
+    deleteWork(workToDelete.id);
+    const remaining = works.filter((w) => w.id !== workToDelete.id);
+    const nextId = remaining[0]?.id ?? null;
+    setDeleteWorkId(nextId);
+    if (styleWorkId === workToDelete.id) setStyleWorkId(nextId);
+    toast.success(`"${workToDelete.title}" 작품이 삭제되었습니다.`);
+  };
 
   useEffect(() => {
     void initMdStorage().then(() => setMdFolder(getMdSaveFolderName()));
@@ -99,7 +117,7 @@ export default function SettingsTab() {
     <div className="page-stack mx-auto max-w-3xl">
       <SectionCard
         title="MD 로컬 저장"
-        description="세계관·인물·플롯·초안·각색방향·AI집필·최종본·문체 설정을 입력하면 자동으로 MD 파일로 저장됩니다."
+        description="각 항목의 MD 저장 버튼을 눌러 파일로 저장합니다. 폴더를 연결하면 다운로드 없이 저장됩니다."
       >
         <div className="flex flex-wrap gap-2">
           {supportsMdFolderPicker() && (
@@ -128,29 +146,64 @@ export default function SettingsTab() {
         </p>
       </SectionCard>
 
-      <SectionCard title="Claude API" description="Anthropic API Key (브라우저에서 직접 호출)">
-        <div className="space-y-3">
-          <div>
-            <Label htmlFor="api-key">API Key</Label>
-            <Input
-              id="api-key"
-              type="password"
-              className="mt-1 font-mono text-caption"
-              value={settings.claudeApiKey}
-              onChange={(e) => updateSettings({ claudeApiKey: e.target.value })}
-              placeholder="sk-ant-..."
-            />
+      <SectionCard
+        title="Claude API"
+        description={
+          isLocalDev
+            ? '로컬 개발 환경에서만 API Key를 입력할 수 있습니다.'
+            : 'API Key는 보안상 로컬 개발(npm run dev)에서만 설정할 수 있습니다.'
+        }
+      >
+        {isLocalDev ? (
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="api-key">API Key</Label>
+              <Input
+                id="api-key"
+                type="password"
+                className="mt-1 font-mono text-caption"
+                value={settings.claudeApiKey}
+                onChange={(e) => updateSettings({ claudeApiKey: e.target.value })}
+                placeholder="sk-ant-..."
+              />
+              <p className="mt-1 text-caption text-muted-foreground">
+                `.env`의 `VITE_ANTHROPIC_API_KEY` 또는 여기에 직접 입력하세요.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="model">모델</Label>
+              <Input
+                id="model"
+                className="mt-1 font-mono text-caption"
+                value={settings.claudeModel}
+                onChange={(e) => updateSettings({ claudeModel: e.target.value })}
+              />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="model">모델</Label>
-            <Input
-              id="model"
-              className="mt-1 font-mono text-caption"
-              value={settings.claudeModel}
-              onChange={(e) => updateSettings({ claudeModel: e.target.value })}
-            />
-          </div>
-        </div>
+        ) : (
+          <p className="text-body text-muted-foreground">
+            GitHub Pages 등 배포 환경에서는 API Key 입력이 비활성화되어 있습니다.
+            <br />
+            AI 집필을 사용하려면 프로젝트 폴더에서{' '}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-caption">npm run dev</code>
+            로 로컬 서버를 실행한 뒤 설정 탭에서 키를 입력하세요.
+          </p>
+        )}
+      </SectionCard>
+
+      <SectionCard title="작품 삭제" description="작품과 모든 회차 데이터를 영구 삭제합니다.">
+        <WorkSelector screen="settings" value={deleteWorkId} onChange={setDeleteWorkId} />
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          className="mt-4"
+          disabled={!workToDelete}
+          onClick={handleDeleteWork}
+        >
+          <Trash2 size={14} className="mr-1.5" />
+          {workToDelete ? `"${workToDelete.title}" 삭제` : '삭제할 작품 선택'}
+        </Button>
       </SectionCard>
 
       <SectionCard title="집필 모드">
@@ -191,7 +244,17 @@ export default function SettingsTab() {
         </div>
       </SectionCard>
 
-      <SectionCard title="문체 · 요구사항 (작품별)">
+      <SectionCard
+        title="문체 · 요구사항 (작품별)"
+        action={
+          styleWork ? (
+            <SaveActionGroup
+              onSave={() => toast.success('문체 설정이 저장되었습니다.')}
+              onSaveMd={() => saveStyleMd(styleWork)}
+            />
+          ) : undefined
+        }
+      >
         <WorkSelector screen="settings" value={styleWorkId} onChange={setStyleWorkId} />
         {styleWork && (
           <div className="mt-4 space-y-3">

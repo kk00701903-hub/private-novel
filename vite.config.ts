@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs/promises';
 import nodePath from 'node:path';
-import { componentTagger } from 'lovable-tagger';
 import path from "path";
 
 import { parse } from '@babel/parser';
@@ -209,21 +208,21 @@ const GITHUB_PAGES_BASE = '/private-novel/';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const base =
-    process.env.VITE_BASE_PATH ??
-    (mode === 'production' ? GITHUB_PAGES_BASE : '/');
+  const base = process.env.VITE_BASE_PATH ?? GITHUB_PAGES_BASE;
 
   return {
     base,
     server: {
       host: "::",
       port: 8080,
+      open: `${GITHUB_PAGES_BASE}writing`,
+    },
+    preview: {
+      port: 8080,
     },
     plugins: [
       tailwindcss(),
       react(),
-      mode === 'development' &&
-      componentTagger(),
       cdnPrefixImages(),
     ].filter(Boolean),
     resolve: {

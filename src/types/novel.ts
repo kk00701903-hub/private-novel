@@ -46,7 +46,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  claudeApiKey: import.meta.env.VITE_ANTHROPIC_API_KEY ?? '',
+  claudeApiKey: import.meta.env.DEV ? (import.meta.env.VITE_ANTHROPIC_API_KEY ?? '') : '',
   claudeModel: 'claude-sonnet-4-20250514',
   rewriteMode: 'draft',
   defaultWorkByScreen: {

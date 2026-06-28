@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Users, Globe, GitBranch, List, Search } from 'lucide-react';
 import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
-import WorkSelector from '@/components/shared/WorkSelector';
 import EpisodeSelector from '@/components/shared/EpisodeSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +21,8 @@ import {
 } from '@/components/ui/accordion';
 import SectionCard from '@/components/layout/SectionCard';
 import PageToolbar from '@/components/layout/PageToolbar';
-import { checkConsistency } from '@/services/claudeService';
+import SaveActionGroup from '@/components/layout/SaveActionGroup';
+import { saveCharactersMd, saveEpisodePlotMd, saveWorldviewMd } from '@/lib/mdSync';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -31,7 +31,6 @@ export default function WorksTab() {
   const settings = useNovelStore((s) => s.settings);
   const createWork = useNovelStore((s) => s.createWork);
   const updateWork = useNovelStore((s) => s.updateWork);
-  const deleteWork = useNovelStore((s) => s.deleteWork);
   const setTotalEpisodes = useNovelStore((s) => s.setTotalEpisodes);
   const setEpisodeField = useNovelStore((s) => s.setEpisodeField);
   const addCharacter = useNovelStore((s) => s.addCharacter);
@@ -81,69 +80,66 @@ export default function WorksTab() {
   };
 
   return (
-    <div className="page-stack flex flex-col lg:flex-row lg:gap-6">
-      <SectionCard title="작품 목록" className="w-full shrink-0 lg:w-56" bodyClassName="space-y-2">
-        <div className="flex justify-end">
-          <Button type="button" size="sm" variant="outline" onClick={handleCreate}>
+    <div className="page-stack mx-auto max-w-3xl">
+      <SectionCard
+        title="작품 목록"
+        noPadding
+        action={
+          <Button type="button" size="sm" variant="outline" onClick={handleCreate} aria-label="새 작품">
             <Plus size={14} />
           </Button>
-        </div>
-        <ul className="space-y-1">
-          {works.map((w) => (
-            <li key={w.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  setWorkId(w.id);
-                  setDefaultWorkForScreen('works', w.id);
-                }}
-                className={cn(
-                  'w-full rounded-[var(--radius-md)] px-3 py-2 text-left text-body transition-colors',
-                  workId === w.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted/70',
-                )}
-              >
-                {w.title}
-              </button>
-            </li>
-          ))}
-        </ul>
+        }
+      >
+        {works.length === 0 ? (
+          <p className="px-4 py-6 text-body text-muted-foreground">작품을 추가해 시작하세요.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {works.map((w) => (
+              <li key={w.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWorkId(w.id);
+                    setDefaultWorkForScreen('works', w.id);
+                  }}
+                  className={cn(
+                    'flex w-full flex-col gap-0.5 px-4 py-3 text-left transition-colors',
+                    workId === w.id ? 'bg-primary/8' : 'hover:bg-muted/60',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'text-body font-semibold',
+                      workId === w.id ? 'text-primary' : 'text-foreground',
+                    )}
+                  >
+                    {w.title}
+                  </span>
+                  <span className="text-caption text-muted-foreground">
+                    {w.totalEpisodes}회차 · {w.episodes.filter((e) => e.finalText.trim()).length}회 저장됨
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </SectionCard>
 
-      <div className="min-w-0 flex-1 page-stack">
-        {!work ? (
-          <p className="text-body text-muted-foreground">작품을 선택하거나 새로 추가하세요.</p>
-        ) : (
-          <>
-            <SectionCard noPadding bodyClassName="p-4 sm:p-5">
-              <PageToolbar>
-                <WorkSelector
-                  screen="works"
-                  value={workId}
-                  onChange={(id) => {
-                    setWorkId(id);
-                    setDefaultWorkForScreen('works', id);
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    if (confirm(`"${work.title}"을(를) 삭제할까요?`)) {
-                      deleteWork(work.id);
-                      setWorkId(works.find((w) => w.id !== work.id)?.id ?? null);
-                    }
-                  }}
-                >
-                  <Trash2 size={14} className="mr-1" />
-                  삭제
-                </Button>
-                <Button type="button" size="sm" variant="secondary" onClick={handleConsistency} disabled={isChecking}>
-                  <Search size={14} className="mr-1" />
-                  {isChecking ? '검토 중…' : '일관성 검토'}
-                </Button>
-              </PageToolbar>
-            </SectionCard>
+      {!work ? (
+        works.length > 0 && (
+          <p className="text-body text-muted-foreground">목록에서 작품을 선택하세요.</p>
+        )
+      ) : (
+        <>
+          <SectionCard noPadding bodyClassName="p-4 sm:p-5">
+            <PageToolbar>
+              <span className="text-title font-semibold">{work.title}</span>
+              <Button type="button" size="sm" variant="secondary" onClick={handleConsistency} disabled={isChecking}>
+                <Search size={14} className="mr-1" />
+                {isChecking ? '검토 중…' : '일관성 검토'}
+              </Button>
+            </PageToolbar>
+          </SectionCard>
 
             <Accordion type="multiple" defaultValue={['basic', 'world', 'chars', 'plots']} className="space-y-3">
               <AccordionItem value="basic" className="overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-app-sm px-4">
@@ -183,6 +179,12 @@ export default function WorksTab() {
                     onChange={(e) => updateWork(work.id, { worldview: e.target.value })}
                     placeholder="세계관, 배경, 규칙 등"
                   />
+                  <div className="mt-3">
+                    <SaveActionGroup
+                      onSave={() => toast.success('세계관이 저장되었습니다.')}
+                      onSaveMd={() => saveWorldviewMd(work)}
+                    />
+                  </div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -289,6 +291,12 @@ export default function WorksTab() {
                       </div>
                     )}
                   </div>
+                  <div className="pt-2">
+                    <SaveActionGroup
+                      onSave={() => toast.success('인물 설정이 저장되었습니다.')}
+                      onSaveMd={() => saveCharactersMd(work)}
+                    />
+                  </div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -318,6 +326,10 @@ export default function WorksTab() {
                       placeholder={`${episodeNumber}회차 플롯`}
                     />
                   </div>
+                  <SaveActionGroup
+                    onSave={() => toast.success(`${episodeNumber}회차 플롯이 저장되었습니다.`)}
+                    onSaveMd={() => saveEpisodePlotMd(work, episodeNumber)}
+                  />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -329,7 +341,6 @@ export default function WorksTab() {
             )}
           </>
         )}
-      </div>
     </div>
   );
 }

@@ -10,10 +10,11 @@
 
   --radius: 0.625rem;
 
-  /* Layout */
-  --header-h: 7.5rem;
-  --bottom-nav-h: 3.5rem;
-  --editor-min-h: calc(100dvh - var(--header-h) - var(--bottom-nav-h) - 12rem);
+  /* Layout — match shell (mobile: title only; md+: title + desktop nav) */
+  --app-max-w: 48rem;
+  --header-h: 5.75rem;
+  --bottom-nav-h: 3.75rem;
+  --editor-min-h: 16rem;
 
   /* Editorial palette */
   --background: oklch(0.985 0.008 85);
@@ -69,6 +70,14 @@
   --sidebar-ring: oklch(0.42 0.12 195);
 }
 
+@media (min-width: 768px) {
+  :root {
+    --header-h: 9.25rem;
+    --bottom-nav-h: 0rem;
+    --editor-min-h: 20rem;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -122,6 +131,9 @@
 
   html {
     @apply scroll-smooth antialiased;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -192,5 +204,11 @@
   }
   .page-stack {
     @apply flex flex-col gap-6;
+  }
+  .app-shell {
+    @apply mx-auto w-full max-w-[var(--app-max-w)];
+  }
+  .app-viewport {
+    @apply flex min-h-dvh flex-col;
   }
 }

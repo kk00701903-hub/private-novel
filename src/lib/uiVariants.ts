@@ -39,17 +39,42 @@ export const statusBadgeVariants = cva(
   },
 );
 
-export const episodeRowVariants = cva(
-  'flex items-center gap-2 px-3 py-2.5 transition-colors sm:gap-3 sm:px-4',
-  {
-    variants: {
-      selected: {
-        true: 'bg-primary/6',
-        false: 'hover:bg-muted/70',
-      },
+export const episodeRowVariants = cva('transition-colors', {
+  variants: {
+    selected: {
+      true: '',
+      false: '',
     },
-    defaultVariants: {
-      selected: false,
+    layout: {
+      horizontal: 'flex items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4',
+      vertical:
+        'flex flex-col items-stretch gap-2.5 rounded-[var(--radius-md)] border px-3 py-3 sm:px-4',
     },
   },
-);
+  compoundVariants: [
+    {
+      layout: 'horizontal',
+      selected: true,
+      className: 'bg-primary/6',
+    },
+    {
+      layout: 'horizontal',
+      selected: false,
+      className: 'hover:bg-muted/70',
+    },
+    {
+      layout: 'vertical',
+      selected: true,
+      className: 'border-primary/40 bg-primary/5',
+    },
+    {
+      layout: 'vertical',
+      selected: false,
+      className: 'border-border bg-card hover:border-primary/25 hover:bg-muted/30',
+    },
+  ],
+  defaultVariants: {
+    selected: false,
+    layout: 'horizontal',
+  },
+});

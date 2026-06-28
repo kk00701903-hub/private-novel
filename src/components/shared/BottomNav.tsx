@@ -17,7 +17,7 @@ export default function BottomNav() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="하단 탭"
     >
-      <div className="mx-auto flex max-w-lg items-stretch justify-around">
+      <div className="mx-auto flex w-full max-w-[var(--app-max-w)] items-stretch justify-around">
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

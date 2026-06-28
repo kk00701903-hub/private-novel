@@ -2,10 +2,12 @@ import { saveMdLocally } from '@/lib/localMdStorage';
 import {
   collectWorkMdFiles,
   episodeAiFilename,
+  episodeDirectionFilename,
   episodeDraftFilename,
   episodeFinalFilename,
   episodePlotFilename,
   serializeEpisodeAiMd,
+  serializeEpisodeDirectionMd,
   serializeEpisodeDraftMd,
   serializeEpisodeFinalMd,
   serializeEpisodePlotMd,
@@ -18,93 +20,130 @@ import {
 } from '@/lib/mdExport';
 import type { Episode, Work } from '@/types/novel';
 
-const timers = new Map<string, ReturnType<typeof setTimeout>>();
-const DEBOUNCE_MS = 1200;
+export type MdSaveResult = { success: boolean; filename?: string; message?: string };
 
-function schedule(key: string, fn: () => void) {
-  const existing = timers.get(key);
-  if (existing) clearTimeout(existing);
-  timers.set(
-    key,
-    setTimeout(() => {
-      timers.delete(key);
-      fn();
-    }, DEBOUNCE_MS),
+async function writeMd(
+  filename: string,
+  content: string,
+  emptyMessage: string,
+  hasContent: boolean,
+): Promise<MdSaveResult> {
+  if (!hasContent) return { success: false, message: emptyMessage };
+  await saveMdLocally(filename, content);
+  return { success: true, filename };
+}
+
+function getEpisode(work: Work, episodeNumber: number): Episode | undefined {
+  return work.episodes.find((e) => e.number === episodeNumber);
+}
+
+function episodeWithOverrides(
+  ep: Episode,
+  overrides?: Partial<Pick<Episode, 'draft' | 'rewriteDirection' | 'plot' | 'aiResult' | 'finalText'>>,
+): Episode {
+  return overrides ? { ...ep, ...overrides } : ep;
+}
+
+export async function saveWorldviewMd(work: Work): Promise<MdSaveResult> {
+  return writeMd(
+    workWorldviewFilename(work),
+    serializeWorldviewMd(work),
+    '세계관 내용을 입력하세요.',
+    Boolean(work.worldview.trim()),
   );
 }
 
-function saveIfContent(filename: string, content: string, hasContent: boolean) {
-  if (!hasContent) return;
-  void saveMdLocally(filename, content);
+export async function saveCharactersMd(work: Work): Promise<MdSaveResult> {
+  return writeMd(
+    workCharactersFilename(work),
+    serializeCharactersMd(work),
+    '인물 또는 관계를 추가하세요.',
+    work.characters.length > 0 || work.relations.length > 0,
+  );
 }
 
-export function syncEpisodeFieldMd(work: Work, episodeNumber: number, field: keyof Episode) {
-  const ep = work.episodes.find((e) => e.number === episodeNumber);
-  if (!ep) return;
-
-  const key = `${work.id}-ep-${episodeNumber}-${field}`;
-  schedule(key, () => {
-    switch (field) {
-      case 'draft':
-      case 'rewriteDirection':
-        saveIfContent(
-          episodeDraftFilename(work, episodeNumber),
-          serializeEpisodeDraftMd(work, ep),
-          Boolean(ep.draft.trim() || ep.rewriteDirection.trim()),
-        );
-        break;
-      case 'plot':
-      case 'title':
-        saveIfContent(
-          episodePlotFilename(work, episodeNumber),
-          serializeEpisodePlotMd(work, ep),
-          Boolean(ep.plot.trim()),
-        );
-        break;
-      case 'aiResult':
-        saveIfContent(
-          episodeAiFilename(work, episodeNumber),
-          serializeEpisodeAiMd(work, ep),
-          Boolean(ep.aiResult.trim()),
-        );
-        break;
-      case 'finalText':
-        saveIfContent(
-          episodeFinalFilename(work, episodeNumber),
-          serializeEpisodeFinalMd(work, ep),
-          Boolean(ep.finalText.trim()),
-        );
-        break;
-      default:
-        break;
-    }
-  });
+export async function saveStyleMd(work: Work): Promise<MdSaveResult> {
+  return writeMd(
+    workStyleFilename(work),
+    serializeStyleMd(work),
+    '문체 예시 또는 요구사항을 입력하세요.',
+    Boolean(work.styleGuide.trim() || work.styleRequirements.trim()),
+  );
 }
 
-export function syncWorkMetaMd(work: Work, fields: Array<keyof Work>) {
-  if (fields.some((f) => f === 'worldview')) {
-    schedule(`${work.id}-worldview`, () => {
-      saveIfContent(workWorldviewFilename(work), serializeWorldviewMd(work), Boolean(work.worldview.trim()));
-    });
-  }
-  if (fields.some((f) => f === 'styleGuide' || f === 'styleRequirements')) {
-    schedule(`${work.id}-style`, () => {
-      saveIfContent(
-        workStyleFilename(work),
-        serializeStyleMd(work),
-        Boolean(work.styleGuide.trim() || work.styleRequirements.trim()),
-      );
-    });
-  }
-  if (fields.some((f) => f === 'characters' || f === 'relations')) {
-    schedule(`${work.id}-characters`, () => {
-      saveIfContent(
-        workCharactersFilename(work),
-        serializeCharactersMd(work),
-        work.characters.length > 0 || work.relations.length > 0,
-      );
-    });
-  }
+export async function saveEpisodePlotMd(work: Work, episodeNumber: number): Promise<MdSaveResult> {
+  const ep = getEpisode(work, episodeNumber);
+  if (!ep) return { success: false, message: '회차를 찾을 수 없습니다.' };
+  return writeMd(
+    episodePlotFilename(work, episodeNumber),
+    serializeEpisodePlotMd(work, ep),
+    '플롯을 입력하세요.',
+    Boolean(ep.plot.trim()),
+  );
+}
+
+export async function saveEpisodeDraftMd(
+  work: Work,
+  episodeNumber: number,
+  overrides?: { draft?: string; rewriteDirection?: string },
+): Promise<MdSaveResult> {
+  const ep = getEpisode(work, episodeNumber);
+  if (!ep) return { success: false, message: '회차를 찾을 수 없습니다.' };
+  const merged = episodeWithOverrides(ep, overrides);
+  return writeMd(
+    episodeDraftFilename(work, episodeNumber),
+    serializeEpisodeDraftMd(work, merged),
+    '초안을 입력하세요.',
+    Boolean(merged.draft.trim()),
+  );
+}
+
+export async function saveEpisodeDirectionMd(
+  work: Work,
+  episodeNumber: number,
+  direction?: string,
+): Promise<MdSaveResult> {
+  const ep = getEpisode(work, episodeNumber);
+  if (!ep) return { success: false, message: '회차를 찾을 수 없습니다.' };
+  const merged = episodeWithOverrides(ep, direction !== undefined ? { rewriteDirection: direction } : undefined);
+  return writeMd(
+    episodeDirectionFilename(work, episodeNumber),
+    serializeEpisodeDirectionMd(work, merged),
+    '각색 방향을 입력하세요.',
+    Boolean(merged.rewriteDirection.trim()),
+  );
+}
+
+export async function saveEpisodeAiMd(
+  work: Work,
+  episodeNumber: number,
+  text?: string,
+): Promise<MdSaveResult> {
+  const ep = getEpisode(work, episodeNumber);
+  if (!ep) return { success: false, message: '회차를 찾을 수 없습니다.' };
+  const merged = episodeWithOverrides(ep, text !== undefined ? { aiResult: text } : undefined);
+  return writeMd(
+    episodeAiFilename(work, episodeNumber),
+    serializeEpisodeAiMd(work, merged),
+    'AI 집필 내용이 없습니다.',
+    Boolean(merged.aiResult.trim()),
+  );
+}
+
+export async function saveEpisodeFinalMd(
+  work: Work,
+  episodeNumber: number,
+  text?: string,
+): Promise<MdSaveResult> {
+  const ep = getEpisode(work, episodeNumber);
+  if (!ep) return { success: false, message: '회차를 찾을 수 없습니다.' };
+  const merged = episodeWithOverrides(ep, text !== undefined ? { finalText: text } : undefined);
+  return writeMd(
+    episodeFinalFilename(work, episodeNumber),
+    serializeEpisodeFinalMd(work, merged),
+    '최종본 내용이 없습니다.',
+    Boolean(merged.finalText.trim()),
+  );
 }
 
 export async function exportWorkAllMd(work: Work): Promise<number> {
@@ -121,17 +160,4 @@ export async function exportAllWorksMd(works: Work[]): Promise<number> {
     count += await exportWorkAllMd(work);
   }
   return count;
-}
-
-/** Immediate save (no debounce) for explicit user actions */
-export function saveEpisodeFinalMdNow(work: Work, episodeNumber: number) {
-  const ep = work.episodes.find((e) => e.number === episodeNumber);
-  if (!ep?.finalText.trim()) return;
-  void saveMdLocally(episodeFinalFilename(work, episodeNumber), serializeEpisodeFinalMd(work, ep));
-}
-
-export function saveEpisodeAiMdNow(work: Work, episodeNumber: number) {
-  const ep = work.episodes.find((e) => e.number === episodeNumber);
-  if (!ep?.aiResult.trim()) return;
-  void saveMdLocally(episodeAiFilename(work, episodeNumber), serializeEpisodeAiMd(work, ep));
 }

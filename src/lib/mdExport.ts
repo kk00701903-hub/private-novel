@@ -42,6 +42,10 @@ export function workStyleFilename(work: Work): string {
   return `${workFilenamePrefix(work)}_문체설정.md`;
 }
 
+export function episodeDirectionFilename(work: Work, episodeNumber: number): string {
+  return `${workFilenamePrefix(work)}_${episodeNumber}회차_각색방향.md`;
+}
+
 export function workBackupFilename(work: Work): string {
   return `${workFilenamePrefix(work)}_전체백업.md`;
 }
@@ -58,6 +62,19 @@ export function serializeEpisodeDraftMd(work: Work, episode: Episode): string {
   if (dirLine) lines.push(dirLine);
   lines.push('---', '', episode.draft.trimEnd(), '');
   return lines.join('\n');
+}
+
+export function serializeEpisodeDirectionMd(work: Work, episode: Episode): string {
+  return [
+    frontmatter([
+      `work: ${work.title}`,
+      `episode: ${episode.number}`,
+      'type: direction',
+      ...(episode.title.trim() ? [`title: ${JSON.stringify(episode.title)}`] : []),
+    ]),
+    episode.rewriteDirection.trimEnd(),
+    '',
+  ].join('\n');
 }
 
 export function serializeEpisodePlotMd(work: Work, episode: Episode): string {

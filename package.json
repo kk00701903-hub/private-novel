@@ -5,7 +5,7 @@
   "homepage": "https://kk00701903-hub.github.io/private-novel/",
   "type": "module",
   "scripts": {
-    "dev": "VITE_ENABLE_ROUTE_MESSAGING=true vite",
+    "dev": "vite",
     "build": "VITE_ENABLE_ROUTE_MESSAGING=true vite build --mode development",
     "build:pages": "vite build && node scripts/postbuild.mjs",
     "postbuild": "node scripts/postbuild.mjs",
