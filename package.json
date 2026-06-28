@@ -13,6 +13,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
     "@hookform/resolvers": "^3.10.0",
     "@iconify/react": "^6.0.2",
     "@supabase/supabase-js": "^2.55.0",

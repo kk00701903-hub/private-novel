@@ -18,7 +18,7 @@ const NotFound = () => {
           요청하신 경로 <span className="font-mono text-foreground">{location.pathname}</span> 는 현재 프로토타입에 없습니다.
         </p>
         <Link
-          to="/"
+          to="/writing"
           className="mt-6 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:brightness-110"
         >
           홈으로 돌아가기

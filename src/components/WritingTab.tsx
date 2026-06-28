@@ -1,142 +1,179 @@
-import { useState } from 'react';
-import { Check, Copy, FileText, Key, Loader2, Sparkles } from 'lucide-react';
-import { refineNovel } from '../services/openaiService';
+import { useEffect, useState } from 'react';
+import { Check, Copy, ChevronDown, ChevronUp, Loader2, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNovelStore, resolveWorkId } from '@/stores/novelStore';
+import WorkSelector from '@/components/shared/WorkSelector';
+import EpisodeSelector from '@/components/shared/EpisodeSelector';
+import { Button } from '@/components/ui/button';
+import { rewriteEpisode } from '@/services/claudeService';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export default function WritingTab() {
-  const [apiKey, setApiKey] = useState(import.meta.env.VITE_OPENAI_API_KEY ?? '');
-  const [episodeNumber, setEpisodeNumber] = useState(2);
-  const [draft, setDraft] = useState('');
-  const [refinedText, setRefinedText] = useState('');
-  const [isRefining, setIsRefining] = useState(false);
+  const works = useNovelStore((s) => s.works);
+  const settings = useNovelStore((s) => s.settings);
+  const saveAiResult = useNovelStore((s) => s.saveAiResult);
+  const setDefaultWorkForScreen = useNovelStore((s) => s.setDefaultWorkForScreen);
+
+  const [workId, setWorkId] = useState<string | null>(() =>
+    resolveWorkId('writing', works, settings),
+  );
+  const [episodeNumber, setEpisodeNumber] = useState(1);
+  const [result, setResult] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
 
-  const handleRefine = async () => {
-    if (!draft.trim()) return;
-    setIsRefining(true);
+  const work = works.find((w) => w.id === workId);
+  const episode = work?.episodes.find((e) => e.number === episodeNumber);
+  const mode = settings.rewriteMode;
+  const modeLabel = mode === 'draft' ? '초안 + 각색 방향' : '플롯 + 이전 회차';
+
+  useEffect(() => {
+    if (!workId && works.length > 0) {
+      setWorkId(resolveWorkId('writing', works, settings));
+    }
+  }, [workId, works, settings]);
+
+  useEffect(() => {
+    setResult(episode?.aiResult ?? '');
+  }, [workId, episodeNumber, episode?.aiResult]);
+
+  const handleWrite = async () => {
+    if (!work) return;
+    if (mode === 'draft' && !episode?.draft?.trim()) {
+      toast.error('초안 입력 탭에서 초안을 먼저 입력하세요.');
+      return;
+    }
+    if (mode === 'plot' && !episode?.plot?.trim()) {
+      toast.error('작품 관리에서 해당 회차 플롯을 먼저 입력하세요.');
+      return;
+    }
+
+    setIsLoading(true);
     setError('');
-    setRefinedText('');
-
     try {
-      const result = await refineNovel(draft, episodeNumber, apiKey);
-      setRefinedText(result);
+      const text = await rewriteEpisode(
+        work,
+        episodeNumber,
+        mode,
+        settings.claudeApiKey,
+        settings.claudeModel,
+      );
+      setResult(text);
+      if (workId) saveAiResult(workId, episodeNumber, text);
+      toast.success('AI 집필이 완료되었습니다. 결과 저장 탭에서 최종본을 저장하세요.');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '요청 중 오류가 발생했습니다.');
+      setError(err instanceof Error ? err.message : '집필 중 오류가 발생했습니다.');
     } finally {
-      setIsRefining(false);
+      setIsLoading(false);
     }
   };
 
   const handleCopy = async () => {
-    if (!refinedText) return;
-    await navigator.clipboard.writeText(refinedText);
+    if (!result) return;
+    await navigator.clipboard.writeText(result);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   };
 
+  const prevCount = work?.episodes.filter((e) => e.number < episodeNumber && e.finalText.trim()).length ?? 0;
+
   return (
-    <div className="flex h-full flex-col gap-5">
-      {/* @section: writing-toolbar */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-[0_18px_45px_-28px_rgba(20,184,166,0.45)]">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex min-w-[260px] flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
-            <Key size={15} className="shrink-0 text-muted-foreground" />
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
-              placeholder="OpenAI API Key (sk-...)"
-              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-            />
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2">
-            <label htmlFor="episode-number" className="whitespace-nowrap text-sm text-muted-foreground">
-              현재 작업 회차
-            </label>
-            <input
-              id="episode-number"
-              type="number"
-              min={1}
-              value={episodeNumber}
-              onChange={(event) => setEpisodeNumber(Number(event.target.value))}
-              className="w-20 bg-transparent text-center text-sm font-semibold text-foreground focus:outline-none"
-            />
-            <span className="text-sm text-muted-foreground">회차</span>
-          </div>
+    <div className="flex flex-col gap-5">
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <WorkSelector
+            screen="writing"
+            value={workId}
+            onChange={(id) => {
+              setWorkId(id);
+              setDefaultWorkForScreen('writing', id);
+            }}
+          />
+          <EpisodeSelector work={work} episodeNumber={episodeNumber} onChange={setEpisodeNumber} />
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
+            {modeLabel}
+          </span>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          API 키가 없으면 Mock 응답으로 동작합니다. 프로토타입 특성상 브라우저에서 직접 OpenAI SDK를 호출합니다.
+          설정 탭에서 집필 모드를 변경할 수 있습니다. Claude API Key가 없으면 Mock 응답으로 동작합니다.
         </p>
       </div>
 
-      {/* @section: writing-split-screen */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 xl:grid-cols-2">
-        <section className="flex min-h-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-[0_18px_45px_-32px_rgba(20,184,166,0.38)]">
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-card-foreground">
-              <FileText size={16} className="text-primary" />
-              초안 작성
-            </h2>
-            <span className="rounded-full bg-secondary px-2.5 py-1 text-xs text-muted-foreground">{draft.length}자</span>
-          </div>
-          <textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={`${episodeNumber}회차 초안을 여기에 입력하세요...\n\n예시: 이든은 어둠 속 도서관 문을 밀었다. 먼지 쌓인 책들 사이, 금빛 글자가 새겨진 낡은 책이 눈에 띄었다.`}
-            className="min-h-[360px] flex-1 resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <button
-            type="button"
-            onClick={handleRefine}
-            disabled={isRefining || !draft.trim()}
-            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_-14px_rgba(20,184,166,0.95)] transition-all duration-200 hover:-translate-y-0.5 hover:brightness-110 disabled:translate-y-0 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
-          >
-            {isRefining ? (
+      <Collapsible open={contextOpen} onOpenChange={setContextOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between">
+            참조 컨텍스트 요약
+            {contextOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+          <ul className="space-y-1">
+            <li>세계관: {work?.worldview ? `${work.worldview.slice(0, 80)}…` : '(없음)'}</li>
+            <li>인물: {work?.characters.length ?? 0}명</li>
+            <li>이전 회차 최종본: {prevCount}개 참조</li>
+            {mode === 'draft' && (
               <>
-                <Loader2 size={16} className="animate-spin" />
-                AI 윤문 중...
+                <li>초안: {episode?.draft ? `${episode.draft.length}자` : '(없음)'}</li>
+                <li>각색 방향: {episode?.rewriteDirection ? '있음' : '(없음)'}</li>
+              </>
+            )}
+            {mode === 'plot' && <li>플롯: {episode?.plot ? '있음' : '(없음)'}</li>}
+          </ul>
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="grid min-h-[420px] grid-cols-1 gap-5 xl:grid-cols-2">
+        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold">입력 요약</h2>
+          {mode === 'draft' ? (
+            <>
+              <div className="flex-1 overflow-auto rounded-lg bg-background p-3 text-sm">
+                <p className="mb-2 font-medium text-muted-foreground">초안</p>
+                <pre className="whitespace-pre-wrap font-mono text-xs">{episode?.draft || '(초안 입력 탭에서 작성)'}</pre>
+              </div>
+              <div className="rounded-lg bg-background p-3 text-sm">
+                <p className="mb-1 font-medium text-muted-foreground">각색 방향</p>
+                <p className="text-xs">{episode?.rewriteDirection || '(없음)'}</p>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 overflow-auto rounded-lg bg-background p-3 text-sm">
+              <p className="mb-2 font-medium text-muted-foreground">플롯</p>
+              <pre className="whitespace-pre-wrap text-xs">{episode?.plot || '(작품 관리에서 작성)'}</pre>
+            </div>
+          )}
+          <Button type="button" onClick={handleWrite} disabled={isLoading} className="w-full">
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                AI 집필 중…
               </>
             ) : (
               <>
-                <Sparkles size={16} />
-                AI 맞춤 수정
+                <Sparkles size={16} className="mr-2" />
+                AI 집필 시작
               </>
             )}
-          </button>
+          </Button>
         </section>
 
-        <section className="flex min-h-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-[0_18px_45px_-32px_rgba(20,184,166,0.38)]">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-card-foreground">
-              <Sparkles size={16} className="text-primary" />
-              AI 윤문 결과
-            </h2>
-            <button
-              type="button"
-              onClick={handleCopy}
-              disabled={!refinedText}
-              className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs text-secondary-foreground transition-colors hover:bg-accent disabled:opacity-40"
-            >
-              {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              {copied ? '복사됨' : '결과 복사'}
-            </button>
+        <section className="flex min-h-[320px] flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold">AI 결과</h2>
+            <Button type="button" variant="ghost" size="sm" onClick={handleCopy} disabled={!result}>
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </Button>
           </div>
-          <div className="min-h-[360px] flex-1 overflow-y-auto rounded-2xl border border-border bg-background p-4">
+          <div className="flex-1 overflow-auto rounded-lg bg-background p-3">
             {error ? (
-              <p className="text-sm leading-7 text-destructive">{error}</p>
-            ) : isRefining ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 size={17} className="animate-spin text-primary" />
-                <span>gpt-4o가 세계관과 문체를 분석 중입니다...</span>
-              </div>
-            ) : refinedText ? (
-              <p className="whitespace-pre-wrap text-sm leading-7 text-foreground">{refinedText}</p>
+              <p className="text-sm text-destructive">{error}</p>
             ) : (
-              <p className="text-sm leading-7 text-muted-foreground">
-                왼쪽에 초안을 입력하고 [AI 맞춤 수정]을 누르면 여기에 윤문 결과가 표시됩니다.
-              </p>
+              <pre className="whitespace-pre-wrap font-mono text-sm">{result || 'AI 집필 결과가 여기 표시됩니다.'}</pre>
             )}
           </div>
+          <p className="text-xs text-muted-foreground">{result.length}자 · 결과 저장 탭에서 최종본 확정</p>
         </section>
       </div>
     </div>
